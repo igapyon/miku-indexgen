@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
-    "build": "npm run clean && tsc -p tsconfig.json && npm test && node dist/main.js . --output workspace/index.json",
+    "build": "npm run clean && tsc -p tsconfig.json && npm test && node dist/main.js . --output workspace/index.json --markdown",
     "start": "node dist/main.js",
     "test": "vitest run"
   },

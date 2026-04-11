@@ -1,22 +1,23 @@
 # Architecture Memo
 
-このファイルは、このソフトウェア固有の構成と仕様を記述する。
+This file describes the software-specific structure and behavior.
 
 ## Current Shape
 
-- 実装の入口は `src/main.ts`
-- ビルド結果は `dist/main.js`
-- モジュール方式は Node ESM
-- 主出力はルートの `index.json`
-- `index.json` は `files` 配列を正本にしたフラット構造
-- 各要素は少なくとも `name`, `path`, `directory` を持つ
+- Entry point: `src/main.ts`
+- Build output: `dist/main.js`
+- Module format: Node ESM
+- Primary output: root `index.json`
+- `index.json` uses a flat `files` array as the canonical structure
+- Each file entry includes at least `name`, `path`, `directory`, and `size`
+- `index.md` can also be generated as an optional companion output
 
 ## Build Flow
 
-- `npm run build` はフルビルド
-- `dist/` を削除してから `tsc` を実行する
-- その後に `npm test` を実行する
-- 続けて、このリポジトリを入力にした `workspace/index.json` を生成する
+- `npm run build` is a full build
+- Remove `dist/`, then run `tsc`
+- Run `npm test`
+- Generate `workspace/index.json` and `workspace/index.md` from this repository
 
 ## Main Files
 

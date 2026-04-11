@@ -27,9 +27,10 @@ function createTempWorkspace(): string {
 
 describe("parseArgs", () => {
   it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--no-recursive", "--no-overwrite"])).toEqual({
+    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--markdown", "--no-recursive", "--no-overwrite"])).toEqual({
       targetDir: "./docs",
       outputFileName: "SUMMARY.json",
+      markdownOutput: true,
       recursive: false,
       overwrite: false,
     });
@@ -52,13 +53,14 @@ describe("createIndexes", () => {
     const processed = createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      markdownOutput: false,
       recursive: true,
       overwrite: true,
     });
 
     const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
       basePath: string;
-      files: Array<{ name: string; path: string; directory: string }>;
+      files: Array<{ name: string; path: string; directory: string; size: number }>;
     };
 
     expect(processed).toBe(2);
@@ -68,16 +70,19 @@ describe("createIndexes", () => {
         name: "a.md",
         path: "chapter1/a.md",
         directory: "chapter1",
+        size: 4,
       },
       {
         name: "b.md",
         path: "chapter1/nested/b.md",
         directory: "chapter1/nested",
+        size: 4,
       },
       {
         name: "c.md",
         path: "chapter2/c.md",
         directory: "chapter2",
+        size: 4,
       },
     ]);
   });
@@ -94,10 +99,30 @@ describe("createIndexes", () => {
     createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      markdownOutput: false,
       recursive: true,
       overwrite: false,
     });
 
     expect(readFileSync(join(docsDir, "index.json"), "utf8")).toBe("keep me\n");
+  });
+
+  it("creates index.md when markdown output is enabled", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      markdownOutput: true,
+      recursive: true,
+      overwrite: true,
+    });
+
+    expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain("| [chapter1/a.md](chapter1/a.md) | chapter1 | 4 |");
   });
 });
