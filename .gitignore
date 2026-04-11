@@ -1,5 +1,4 @@
 node_modules/
 dist/
 *.log
-.workspace/
-workspace/index.json
+workspace/
