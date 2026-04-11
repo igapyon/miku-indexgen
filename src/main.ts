@@ -5,6 +5,7 @@ import { pathToFileURL } from "node:url";
 export type CliOptions = {
   targetDir: string;
   outputFileName: string;
+  markdownOutput: boolean;
   recursive: boolean;
   overwrite: boolean;
 };
@@ -13,6 +14,7 @@ export type IndexFile = {
   name: string;
   path: string;
   directory: string;
+  size: number;
 };
 
 export type RootIndex = {
@@ -23,6 +25,7 @@ export type RootIndex = {
 export function parseArgs(argv: string[]): CliOptions {
   const positional: string[] = [];
   let outputFileName = "index.json";
+  let markdownOutput = false;
   let recursive = true;
   let overwrite = true;
 
@@ -32,7 +35,7 @@ export function parseArgs(argv: string[]): CliOptions {
     if (arg === "--output" || arg === "-o") {
       const value = argv[i + 1];
       if (!value) {
-        throw new Error("--output にはファイル名を指定してください。");
+        throw new Error("Please specify a file name for --output.");
       }
       outputFileName = value;
       i += 1;
@@ -41,6 +44,11 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--no-recursive") {
       recursive = false;
+      continue;
+    }
+
+    if (arg === "--markdown") {
+      markdownOutput = true;
       continue;
     }
 
@@ -59,12 +67,13 @@ export function parseArgs(argv: string[]): CliOptions {
 
   const targetDir = positional[0];
   if (!targetDir) {
-    throw new Error("対象フォルダを指定してください。");
+    throw new Error("Please specify a target directory.");
   }
 
   return {
     targetDir,
     outputFileName,
+    markdownOutput,
     recursive,
     overwrite,
   };
@@ -73,11 +82,11 @@ export function parseArgs(argv: string[]): CliOptions {
 export function printHelp(): void {
   console.log(`Usage:
   npm run build
-  node dist/main.js <targetDir> [--output index.json] [--no-recursive] [--no-overwrite]
+  node dist/main.js <targetDir> [--output index.json] [--markdown] [--no-recursive] [--no-overwrite]
 
 Description:
-  指定フォルダ直下の各サブフォルダについて、含まれる Markdown ファイルを集約した
-  ルートの JSON インデックスを生成します。
+  Generate a root JSON index that aggregates Markdown files found under
+  the direct subdirectories of the target directory. Markdown output is optional.
 `);
 }
 
@@ -119,12 +128,32 @@ export function buildIndexContent(
   return `${JSON.stringify(index, null, 2)}\n`;
 }
 
+export function buildMarkdownIndexContent(targetPath: string, files: IndexFile[]): string {
+  const lines: string[] = ["# Index", ""];
+
+  if (files.length === 0) {
+    lines.push("No Markdown files found.", "");
+    return lines.join("\n");
+  }
+
+  lines.push("| File | Directory | Size |");
+  lines.push("| --- | --- | ---: |");
+
+  for (const file of files) {
+    const link = relative(targetPath, join(targetPath, file.path)).split("\\").join("/");
+    lines.push(`| [${file.path}](${link}) | ${file.directory} | ${file.size} |`);
+  }
+
+  lines.push("");
+  return lines.join("\n");
+}
+
 export function createIndexes(options: CliOptions): number {
   const targetPath = resolve(options.targetDir);
   const targetStat = statSync(targetPath, { throwIfNoEntry: false });
 
   if (!targetStat?.isDirectory()) {
-    throw new Error(`対象フォルダが存在しません: ${targetPath}`);
+    throw new Error(`Target directory does not exist: ${targetPath}`);
   }
 
   const subdirs = readdirSync(targetPath, { withFileTypes: true })
@@ -149,6 +178,7 @@ export function createIndexes(options: CliOptions): number {
           name: relative(dirname(filePath), filePath).split("\\").join("/"),
           path: relative(targetPath, filePath).split("\\").join("/"),
           directory: relative(targetPath, dirname(filePath)).split("\\").join("/"),
+          size: statSync(filePath).size,
         })),
     )
     .sort((a, b) => a.path.localeCompare(b.path, "ja"));
@@ -156,6 +186,20 @@ export function createIndexes(options: CliOptions): number {
   mkdirSync(dirname(outputPath), { recursive: true });
   writeFileSync(outputPath, buildIndexContent(targetPath, files, outputPath), "utf8");
   console.log(`generated: ${outputPath}`);
+
+  if (options.markdownOutput) {
+    const markdownOutputPath = join(dirname(outputPath), "index.md");
+    if (!options.overwrite) {
+      const existingMarkdown = statSync(markdownOutputPath, { throwIfNoEntry: false });
+      if (existingMarkdown?.isFile()) {
+        console.log(`skip: ${markdownOutputPath}`);
+        return subdirs.length;
+      }
+    }
+
+    writeFileSync(markdownOutputPath, buildMarkdownIndexContent(targetPath, files), "utf8");
+    console.log(`generated: ${markdownOutputPath}`);
+  }
 
   return subdirs.length;
 }

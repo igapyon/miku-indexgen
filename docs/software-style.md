@@ -1,27 +1,30 @@
 # Software Style Memo
 
-このプロジェクトは、最小構成の Node.js + TypeScript CLI として作る。
+This project should stay a minimal Node.js + TypeScript CLI.
 
 ## Fixed Points
 
-- 利用者の主対象は生成AIとプログラムである
-- 人間可読性より機械可読性を優先する
-- 後段の自動処理が簡単になる形を優先する
-- 小さい構成で全体を把握できる状態を保つ
-- 依存は最小限にして、理解と再現を容易にする
+- The primary consumers are AI agents and programs
+- Prefer machine readability over human-oriented formatting
+- Prefer structures that simplify downstream automation
+- Keep the project small enough to understand as a whole
+- Keep dependencies minimal to preserve clarity and reproducibility
+- Use English as the default language
+- TODOs may be written in Japanese
+- Write README in bilingual form: English first, then a separator line, then Japanese
 
 ## Design Shape
 
-- ひとつの CLI に処理を集約する
-- 入力はコマンドライン引数で受ける
-- 出力はファイル生成として返す
-- オプションは最小限だけ持つ
-- 振る舞いは同期処理で素直に追える形にする
-- 外部ライブラリに頼らず、Node 標準 API で完結させる
+- Keep the core behavior in a single CLI
+- Accept input through command-line arguments
+- Return output as generated files
+- Keep options minimal
+- Prefer straightforward synchronous behavior
+- Prefer Node standard APIs over external libraries
 
 ## Why This Shape
 
-- 小さい CLI なので、フレームワークを入れずに追いやすくする
-- 生成AIやスクリプト側で再帰処理なしに扱えるようにする
-- 読む側の実装負荷を下げる
-- ソフトウェアの具体仕様は別途 `docs/architecture.md` に分離する
+- Avoid framework overhead for a small CLI
+- Make the output easy for AI agents and scripts to consume without recursive parsing
+- Reduce implementation cost on the reader side
+- Keep software-specific details in `docs/architecture.md`
