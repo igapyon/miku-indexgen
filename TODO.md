@@ -21,3 +21,13 @@
 
 - `workbook: ファイル名` のような非見出し先頭行も、そのまま `summary` 候補にできる
 - 将来的に入力エンコーディング指定と出力エンコーディング指定のオプションが欲しい
+
+## 検討中: Node 向け配布
+
+- npm registry で公開できる CLI パッケージ形態を整える
+- `package.json` の `"private": true` を公開向け設定に見直す
+- `bin` エントリを追加して `npx miku-md-indexgen` で実行できるようにする
+- 公開対象ファイルを `files` などで整理する
+- README の利用例を `node dist/main.js` 中心から npm / npx 利用中心へ更新する
+- npm 公開時の信頼性確保は、Java のような成果物 GPG 署名ではなく、npm の 2FA と Trusted Publishing / provenance 対応を優先する
+- GitHub Actions などの CI から Trusted Publishing で publish できる構成を検討する
