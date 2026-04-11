@@ -30,7 +30,8 @@ node dist/main.js ./docs
 
 If `./docs` contains `chapter1` and `chapter2`, the command generates `./docs/index.json`.
 
-The generated JSON uses a flat `files` array as the canonical structure. Each entry includes `name`, `path`, `directory`, and `size`.
+The generated JSON uses a flat `files` array as the canonical structure. Each entry includes `name`, `path`, `directory`, `size`, and optional `summary`.
+`summary` is derived from the first `#`-prefixed heading, or from the leading body text up to 256 characters when no heading appears first.
 
 ---
 
@@ -64,4 +65,5 @@ node dist/main.js ./docs
 
 `./docs` の直下に `chapter1`, `chapter2` がある場合、`./docs/index.json` を生成します。
 
-生成される JSON は、`files` 配列を正本にしたフラット構造です。各要素は `name`, `path`, `directory`, `size` を持ちます。
+生成される JSON は、`files` 配列を正本にしたフラット構造です。各要素は `name`, `path`, `directory`, `size` と、必要に応じて `summary` を持ちます。
+`summary` は最初の `#` 始まり見出し、または見出しより前の本文を最大 256 文字まで使って抽出します。
