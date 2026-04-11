@@ -9,9 +9,20 @@ export type CliOptions = {
   overwrite: boolean;
 };
 
+export type IndexFile = {
+  name: string;
+  path: string;
+  directory: string;
+};
+
+export type RootIndex = {
+  basePath: string;
+  files: IndexFile[];
+};
+
 export function parseArgs(argv: string[]): CliOptions {
   const positional: string[] = [];
-  let outputFileName = "index.md";
+  let outputFileName = "index.json";
   let recursive = true;
   let overwrite = true;
 
@@ -62,11 +73,11 @@ export function parseArgs(argv: string[]): CliOptions {
 export function printHelp(): void {
   console.log(`Usage:
   npm run build
-  node dist/main.js <targetDir> [--output index.md] [--no-recursive] [--no-overwrite]
+  node dist/main.js <targetDir> [--output index.json] [--no-recursive] [--no-overwrite]
 
 Description:
-  指定フォルダ直下の各サブフォルダについて、含まれる Markdown ファイルへのリンクをまとめた
-  インデックス Markdown を生成します。
+  指定フォルダ直下の各サブフォルダについて、含まれる Markdown ファイルを集約した
+  ルートの JSON インデックスを生成します。
 `);
 }
 
@@ -96,29 +107,16 @@ export function collectMarkdownFiles(dirPath: string, recursive: boolean): strin
 }
 
 export function buildIndexContent(
-  subdirPath: string,
-  markdownFiles: string[],
+  targetPath: string,
+  files: IndexFile[],
   outputPath: string,
 ): string {
-  const subdirName = relative(dirname(subdirPath), subdirPath) || subdirPath;
-  const lines: string[] = [`# ${subdirName}`, ""];
+  const index: RootIndex = {
+    basePath: relative(dirname(outputPath), targetPath).split("\\").join("/") || ".",
+    files,
+  };
 
-  if (markdownFiles.length === 0) {
-    lines.push("このフォルダには Markdown ファイルがありません。", "");
-    return lines.join("\n");
-  }
-
-  lines.push("| File |");
-  lines.push("| --- |");
-
-  for (const filePath of markdownFiles) {
-    const label = relative(subdirPath, filePath);
-    const link = relative(dirname(outputPath), filePath).split("\\").join("/");
-    lines.push(`| [${label}](${link}) |`);
-  }
-
-  lines.push("");
-  return lines.join("\n");
+  return `${JSON.stringify(index, null, 2)}\n`;
 }
 
 export function createIndexes(options: CliOptions): number {
@@ -134,24 +132,30 @@ export function createIndexes(options: CliOptions): number {
     .map((entry: Dirent) => join(targetPath, entry.name))
     .sort((a, b) => a.localeCompare(b, "ja"));
 
-  for (const subdirPath of subdirs) {
-    const outputPath = join(subdirPath, options.outputFileName);
-    const markdownFiles = collectMarkdownFiles(subdirPath, options.recursive).filter(
-      (filePath) => resolve(filePath) !== resolve(outputPath),
-    );
-
-    if (!options.overwrite) {
-      const existing = statSync(outputPath, { throwIfNoEntry: false });
-      if (existing?.isFile()) {
-        console.log(`skip: ${outputPath}`);
-        continue;
-      }
+  const outputPath = join(targetPath, options.outputFileName);
+  if (!options.overwrite) {
+    const existing = statSync(outputPath, { throwIfNoEntry: false });
+    if (existing?.isFile()) {
+      console.log(`skip: ${outputPath}`);
+      return subdirs.length;
     }
-
-    mkdirSync(dirname(outputPath), { recursive: true });
-    writeFileSync(outputPath, buildIndexContent(subdirPath, markdownFiles, outputPath), "utf8");
-    console.log(`generated: ${outputPath}`);
   }
+
+  const files: IndexFile[] = subdirs
+    .flatMap((subdirPath) =>
+      collectMarkdownFiles(subdirPath, options.recursive)
+        .filter((filePath) => resolve(filePath) !== resolve(outputPath))
+        .map((filePath) => ({
+          name: relative(dirname(filePath), filePath).split("\\").join("/"),
+          path: relative(targetPath, filePath).split("\\").join("/"),
+          directory: relative(targetPath, dirname(filePath)).split("\\").join("/"),
+        })),
+    )
+    .sort((a, b) => a.path.localeCompare(b.path, "ja"));
+
+  mkdirSync(dirname(outputPath), { recursive: true });
+  writeFileSync(outputPath, buildIndexContent(targetPath, files, outputPath), "utf8");
+  console.log(`generated: ${outputPath}`);
 
   return subdirs.length;
 }

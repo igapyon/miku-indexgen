@@ -27,9 +27,9 @@ function createTempWorkspace(): string {
 
 describe("parseArgs", () => {
   it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.md", "--no-recursive", "--no-overwrite"])).toEqual({
+    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--no-recursive", "--no-overwrite"])).toEqual({
       targetDir: "./docs",
-      outputFileName: "SUMMARY.md",
+      outputFileName: "SUMMARY.json",
       recursive: false,
       overwrite: false,
     });
@@ -37,7 +37,7 @@ describe("parseArgs", () => {
 });
 
 describe("createIndexes", () => {
-  it("creates index files for each direct subdirectory", () => {
+  it("creates one root index file for direct subdirectories", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
     const chapter1 = join(docsDir, "chapter1");
@@ -51,33 +51,53 @@ describe("createIndexes", () => {
 
     const processed = createIndexes({
       targetDir: docsDir,
-      outputFileName: "index.md",
+      outputFileName: "index.json",
       recursive: true,
       overwrite: true,
     });
 
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      basePath: string;
+      files: Array<{ name: string; path: string; directory: string }>;
+    };
+
     expect(processed).toBe(2);
-    expect(readFileSync(join(chapter1, "index.md"), "utf8")).toContain("[a.md](a.md)");
-    expect(readFileSync(join(chapter1, "index.md"), "utf8")).toContain("[nested/b.md](nested/b.md)");
-    expect(readFileSync(join(chapter2, "index.md"), "utf8")).toContain("[c.md](c.md)");
+    expect(index.basePath).toBe(".");
+    expect(index.files).toEqual([
+      {
+        name: "a.md",
+        path: "chapter1/a.md",
+        directory: "chapter1",
+      },
+      {
+        name: "b.md",
+        path: "chapter1/nested/b.md",
+        directory: "chapter1/nested",
+      },
+      {
+        name: "c.md",
+        path: "chapter2/c.md",
+        directory: "chapter2",
+      },
+    ]);
   });
 
-  it("does not overwrite an existing index when overwrite is disabled", () => {
+  it("does not overwrite an existing root index when overwrite is disabled", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
     const chapter1 = join(docsDir, "chapter1");
 
     mkdirSync(chapter1, { recursive: true });
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
-    writeFileSync(join(chapter1, "index.md"), "keep me\n", "utf8");
+    writeFileSync(join(docsDir, "index.json"), "keep me\n", "utf8");
 
     createIndexes({
       targetDir: docsDir,
-      outputFileName: "index.md",
+      outputFileName: "index.json",
       recursive: true,
       overwrite: false,
     });
 
-    expect(readFileSync(join(chapter1, "index.md"), "utf8")).toBe("keep me\n");
+    expect(readFileSync(join(docsDir, "index.json"), "utf8")).toBe("keep me\n");
   });
 });
