@@ -4,28 +4,11 @@
 
 ## Fixed Points
 
-- 実装の入口は `src/main.ts`
-- ビルド結果は `dist/main.js`
-- モジュール方式は Node ESM
-- 依存は最小限にして、実処理は Node 標準 API を優先する
-- `npm run build` はフルビルドにする
-  - `dist/` を消してから `tsc` を実行する
-
-## Minimal File Set
-
-- `src/main.ts`
-- `package.json`
-- `tsconfig.json`
-- `.gitignore`
-- `README.md`
-
-## Reproduction Steps
-
-```bash
-npm install
-npm run build
-node dist/main.js <targetDir>
-```
+- 利用者の主対象は生成AIとプログラムである
+- 人間可読性より機械可読性を優先する
+- 後段の自動処理が簡単になる形を優先する
+- 小さい構成で全体を把握できる状態を保つ
+- 依存は最小限にして、理解と再現を容易にする
 
 ## Design Shape
 
@@ -39,5 +22,6 @@ node dist/main.js <targetDir>
 ## Why This Shape
 
 - 小さい CLI なので、フレームワークを入れずに追いやすくする
-- `main.ts` を入口にして、実行開始点を明確にする
-- `dist/` を毎回作り直して、古い成果物を残さない
+- 生成AIやスクリプト側で再帰処理なしに扱えるようにする
+- 読む側の実装負荷を下げる
+- ソフトウェアの具体仕様は別途 `docs/architecture.md` に分離する
