@@ -18,7 +18,7 @@
 - 危ない文字は削除よりも半角空白への置換を優先する
 - `index.json` のルートに `generator` を置く
 - `generator` は生成ツール識別用のメタデータで、各 `files` 要素には持たせない
-- `generator` の値はまず文字列で扱い、`miku-md-indexgen` を入れる
+- `generator` の値はまず文字列で扱い、`miku-indexgen` を入れる
 - バージョンなどの詳細が必要になったら、将来の互換拡張でオブジェクト化を検討する
 
 ## メモ
@@ -42,7 +42,7 @@
 
 - npm registry で公開できる CLI パッケージ形態を整える
 - `package.json` の `"private": true` を公開向け設定に見直す
-- `bin` エントリを追加して `npx miku-md-indexgen` で実行できるようにする
+- `bin` エントリを追加して `npx miku-indexgen` で実行できるようにする
 - 公開対象ファイルを `files` などで整理する
 - README の利用例を `node dist/main.js` 中心から npm / npx 利用中心へ更新する
 - npm 公開時の信頼性確保は、Java のような成果物 GPG 署名ではなく、npm の 2FA と Trusted Publishing / provenance 対応を優先する

@@ -1,8 +1,8 @@
-# miku-md-indexgen
+# miku-indexgen
 
-`miku-md-indexgen` generates an index of files such as Markdown and JSON under a specified directory, including files in subdirectories.
+`miku-indexgen` generates an index of files such as Markdown and JSON under a specified directory, including files in subdirectories.
 
-`miku-md-indexgen` is one of the tools in Mikuku's software series.
+`miku-indexgen` is one of the tools in Mikuku's software series.
 
 The generated index helps AI agents understand which files exist in the target directory and what each file roughly contains.
 
@@ -86,9 +86,9 @@ Each file entry includes:
 
 ---
 
-`miku-md-indexgen` は、指定ディレクトリ以下にある Markdown や JSON などのファイルのインデックスを生成するツールです。サブディレクトリ内のファイルも対象に含みます。
+`miku-indexgen` は、指定ディレクトリ以下にある Markdown や JSON などのファイルのインデックスを生成するツールです。サブディレクトリ内のファイルも対象に含みます。
 
-`miku-md-indexgen` は、Mikuku's ソフトウェアシリーズのひとつとして提供されるツールです。
+`miku-indexgen` は、Mikuku's ソフトウェアシリーズのひとつとして提供されるツールです。
 
 生成されたインデックスにより、生成AI は対象フォルダ内にどのようなファイルが存在するか、また各ファイルのおおまかな内容を把握しやすくなります。
 
