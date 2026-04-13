@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
 import { vi } from "vitest";
+import iconv from "iconv-lite";
 
 import {
   collectIndexableFiles,
@@ -16,8 +17,11 @@ import {
   escapeMarkdownTableCell,
   extractSummary,
   parseArgs,
+  parseEncodingOption,
   parseIncludeExtensions,
+  readTextFile,
   sanitizeTextForIndex,
+  writeTextFile,
 } from "../src/main.js";
 
 const tempDirs: string[] = [];
@@ -36,7 +40,7 @@ function createTempWorkspace(): string {
 
 describe("parseArgs", () => {
   it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--verbose"])).toEqual({
+    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
       targetDir: "./docs",
       outputFileName: "SUMMARY.json",
       title: "Docs Index",
@@ -45,7 +49,21 @@ describe("parseArgs", () => {
       overwrite: false,
       verbose: true,
       includeExtensions: ["md", "json"],
+      inputEncoding: "shift_jis",
+      outputEncoding: "shift_jis",
     });
+  });
+});
+
+describe("parseEncodingOption", () => {
+  it("normalizes supported encoding aliases", () => {
+    expect(parseEncodingOption("utf-8")).toBe("utf8");
+    expect(parseEncodingOption("ShiftJIS")).toBe("shift_jis");
+    expect(parseEncodingOption("cp932")).toBe("shift_jis");
+  });
+
+  it("rejects unsupported encodings", () => {
+    expect(() => parseEncodingOption("euc-jp")).toThrow("Unsupported encoding: euc-jp");
   });
 });
 
@@ -112,6 +130,8 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
@@ -199,6 +219,8 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
@@ -233,6 +255,8 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
@@ -261,6 +285,8 @@ describe("createIndexes", () => {
       overwrite: false,
       verbose: false,
       includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     expect(readFileSync(join(docsDir, "index.json"), "utf8")).toBe("keep me\n");
@@ -285,6 +311,8 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
@@ -312,6 +340,8 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
     });
 
     expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
@@ -339,6 +369,8 @@ describe("createIndexes", () => {
         overwrite: true,
         verbose: true,
         includeExtensions: ["md", "json"],
+        inputEncoding: "utf8",
+        outputEncoding: "utf8",
       });
       logs = logSpy.mock.calls.map((call) => call.join(" "));
     } finally {
@@ -348,6 +380,8 @@ describe("createIndexes", () => {
     expect(logs).toContain(`verbose: target=${docsDir}`);
     expect(logs).toContain("verbose: title=Verbose Docs");
     expect(logs).toContain("verbose: include-ext=md,json");
+    expect(logs).toContain("verbose: input-encoding=utf8");
+    expect(logs).toContain("verbose: output-encoding=utf8");
     expect(logs).toContain("verbose: subdirectories=1");
     expect(logs).toContain("verbose: scanning-dir=.");
     expect(logs).toContain("verbose: found-file=chapter1/a.md");
@@ -357,5 +391,69 @@ describe("createIndexes", () => {
     expect(logs.some((line) => line.startsWith("verbose: timing.json.stringify="))).toBe(true);
     expect(logs.some((line) => line.startsWith("verbose: timing.json.write="))).toBe(true);
     expect(logs.some((line) => line.startsWith("verbose: timing.total="))).toBe(true);
+  });
+
+  it("reads markdown files as Shift_JIS when requested", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), iconv.encode("# 日本語\n本文\n", "shift_jis"));
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      title: undefined,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
+      inputEncoding: "shift_jis",
+      outputEncoding: "utf8",
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      files: Array<{ summary?: string }>;
+    };
+
+    expect(index.files[0]?.summary).toBe("日本語");
+  });
+
+  it("writes index files as Shift_JIS when requested", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# 日本語\n本文\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      title: "資料一覧",
+      markdownOutput: true,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "shift_jis",
+    });
+
+    expect(readTextFile(join(docsDir, "index.json"), "shift_jis")).toContain("\"title\": \"資料一覧\"");
+    expect(readTextFile(join(docsDir, "index.md"), "shift_jis")).toContain("| [chapter1/a.md](chapter1/a.md) | md | chapter1 |");
+  });
+});
+
+describe("writeTextFile", () => {
+  it("writes text with the specified encoding", () => {
+    const workspace = createTempWorkspace();
+    const filePath = join(workspace, "sample.txt");
+
+    writeTextFile(filePath, "日本語", "shift_jis");
+
+    expect(readFileSync(filePath).equals(iconv.encode("日本語", "shift_jis"))).toBe(true);
   });
 });

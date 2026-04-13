@@ -2,6 +2,7 @@ import { Dirent, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync }
 import { dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { pathToFileURL } from "node:url";
+import iconv from "iconv-lite";
 
 export type CliOptions = {
   targetDir: string;
@@ -12,6 +13,8 @@ export type CliOptions = {
   overwrite: boolean;
   verbose: boolean;
   includeExtensions: string[];
+  inputEncoding: string;
+  outputEncoding: string;
 };
 
 export type IndexFile = {
@@ -30,6 +33,42 @@ export type RootIndex = {
 };
 
 const DEFAULT_INCLUDE_EXTENSIONS = ["md", "json"];
+const DEFAULT_TEXT_ENCODING = "utf8";
+
+export function normalizeEncodingName(value: string): string {
+  const normalized = value.trim().toLowerCase().replace(/[-\s]/g, "_");
+
+  switch (normalized) {
+    case "utf8":
+    case "utf_8":
+      return "utf8";
+    case "shiftjis":
+    case "shift_jis":
+    case "sjis":
+    case "ms_kanji":
+    case "cp932":
+    case "windows_31j":
+      return "shift_jis";
+    default:
+      throw new Error(`Unsupported encoding: ${value}`);
+  }
+}
+
+export function parseEncodingOption(value: string): string {
+  const encoding = normalizeEncodingName(value);
+  if (!iconv.encodingExists(encoding)) {
+    throw new Error(`Unsupported encoding: ${value}`);
+  }
+  return encoding;
+}
+
+export function readTextFile(filePath: string, encoding: string): string {
+  return iconv.decode(readFileSync(filePath), encoding);
+}
+
+export function writeTextFile(filePath: string, content: string, encoding: string): void {
+  writeFileSync(filePath, iconv.encode(content, encoding));
+}
 
 export function parseIncludeExtensions(value: string): string[] {
   const extensions = value
@@ -53,6 +92,8 @@ export function parseArgs(argv: string[]): CliOptions {
   let overwrite = true;
   let verbose = false;
   let includeExtensions = [...DEFAULT_INCLUDE_EXTENSIONS];
+  let inputEncoding = DEFAULT_TEXT_ENCODING;
+  let outputEncoding = DEFAULT_TEXT_ENCODING;
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -102,6 +143,26 @@ export function parseArgs(argv: string[]): CliOptions {
       continue;
     }
 
+    if (arg === "--input-encoding") {
+      const value = argv[i + 1];
+      if (!value) {
+        throw new Error("Please specify an encoding for --input-encoding.");
+      }
+      inputEncoding = parseEncodingOption(value);
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--output-encoding") {
+      const value = argv[i + 1];
+      if (!value) {
+        throw new Error("Please specify an encoding for --output-encoding.");
+      }
+      outputEncoding = parseEncodingOption(value);
+      i += 1;
+      continue;
+    }
+
     if (arg === "--verbose") {
       verbose = true;
       continue;
@@ -129,17 +190,20 @@ export function parseArgs(argv: string[]): CliOptions {
     overwrite,
     verbose,
     includeExtensions,
+    inputEncoding,
+    outputEncoding,
   };
 }
 
 export function printHelp(): void {
   console.log(`Usage:
   npm run build
-  node dist/main.js <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--verbose]
+  node dist/main.js <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
 
 Description:
   Generate a root JSON index that aggregates matching files found under
   the target directory. Markdown output is optional.
+  Supported encodings: utf8, shift_jis
 `);
 }
 
@@ -320,6 +384,8 @@ export function createIndexes(options: CliOptions): number {
       console.log(`verbose: title=${options.title}`);
     }
     console.log(`verbose: include-ext=${options.includeExtensions.join(",")}`);
+    console.log(`verbose: input-encoding=${options.inputEncoding}`);
+    console.log(`verbose: output-encoding=${options.outputEncoding}`);
   }
 
   const subdirsStart = performance.now();
@@ -355,7 +421,7 @@ export function createIndexes(options: CliOptions): number {
     timings.statMs += performance.now() - statStart;
 
     const readFileStart = performance.now();
-    const content = readFileSync(filePath, "utf8");
+    const content = readTextFile(filePath, options.inputEncoding);
     timings.readFileMs += performance.now() - readFileStart;
 
     const ext = filePath.toLowerCase().split(".").at(-1) ?? "";
@@ -387,7 +453,7 @@ export function createIndexes(options: CliOptions): number {
   timings.jsonStringifyMs = performance.now() - jsonStringifyStart;
 
   const jsonWriteStart = performance.now();
-  writeFileSync(outputPath, jsonContent, "utf8");
+  writeTextFile(outputPath, jsonContent, options.outputEncoding);
   timings.jsonWriteMs = performance.now() - jsonWriteStart;
   console.log(`generated: ${outputPath}`);
 
@@ -402,7 +468,7 @@ export function createIndexes(options: CliOptions): number {
     }
 
     const markdownStart = performance.now();
-    writeFileSync(markdownOutputPath, buildMarkdownIndexContent(targetPath, files), "utf8");
+    writeTextFile(markdownOutputPath, buildMarkdownIndexContent(targetPath, files), options.outputEncoding);
     timings.markdownMs = performance.now() - markdownStart;
     console.log(`generated: ${markdownOutputPath}`);
   }
