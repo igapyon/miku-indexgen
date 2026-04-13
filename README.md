@@ -1,6 +1,6 @@
 # miku-md-indexgen
 
-`miku-md-indexgen` generates an index of Markdown files under a specified directory, including files in subdirectories.
+`miku-md-indexgen` generates an index of files such as Markdown and JSON under a specified directory, including files in subdirectories.
 
 `miku-md-indexgen` is one of the tools in Mikuku's software series.
 
@@ -10,11 +10,11 @@ By using this index, AI agents can grasp the overall file set in advance and red
 
 ## Features
 
-- Generates a root `index.json` for Markdown files under a target directory
+- Generates a root `index.json` for selected file extensions under a target directory
 - Uses a flat `files` array that is easy for AI agents and programs to consume
 - Optionally generates `index.md` as a companion human-readable index
-- Extracts a short `summary` from each Markdown file
-- Includes `name`, `path`, `directory`, `size`, and optional `summary` for each file
+- Extracts a short `summary` from Markdown files
+- Includes `name`, `path`, `ext`, `dir`, `size`, and optional `summary` for each file
 
 ## Build
 
@@ -37,34 +37,56 @@ Example:
 node dist/main.js ./docs
 ```
 
-If `./docs` contains Markdown files in nested directories, the command generates `./docs/index.json`. When `--markdown` is specified, it also generates `./docs/index.md`.
+Title example:
+
+```bash
+node dist/main.js ./docs --title "Docs Index"
+```
+
+Verbose example:
+
+```bash
+node dist/main.js ./docs --verbose
+```
+
+If `./docs` contains Markdown or JSON files in nested directories, the command generates `./docs/index.json`. When `--markdown` is specified, it also generates `./docs/index.md`.
 
 This usage is also intended for indexing reference documents used by AI agents and Agent Skills. For example, running the tool against `./references` generates `./references/index.json`, allowing an AI agent to understand the available reference files before reading them one by one.
 
 ## Options
 
 - `--output`, `-o`: Output file name. Default: `index.json`
+- `--title`: Optional root-level title to include in the generated JSON
 - `--markdown`: Also generate `index.md` in the output directory. Default: disabled
 - `--no-recursive`: Do not recurse into nested subdirectories
 - `--no-overwrite`: Do not overwrite existing output files
+- `--include-ext`: Comma-separated file extensions to include. Default: `md,json`
+- `--verbose`: Print progress details such as scanned directories, discovered Markdown files, output paths, and timing breakdowns including `stat`, file read, summary extraction, and JSON stringify/write
 
 ## Output
 
 The generated JSON uses a flat `files` array as the canonical structure.
 
+Root-level fields include:
+
+- `title` (optional)
+- `basePath`
+- `files`
+
 Each file entry includes:
 
 - `name`
 - `path`
-- `directory`
+- `ext` (for example `md` or `json`)
+- `dir`
 - `size`
 - `summary` (optional)
 
-`summary` is derived from the first `#`-prefixed heading, or from the leading body text up to 256 characters when no heading appears first.
+`summary` is derived from the first `#`-prefixed heading, or from the leading body text up to 256 characters when no heading appears first. Only Markdown files get a `summary`.
 
 ---
 
-`miku-md-indexgen` は、指定ディレクトリ以下にある Markdown ファイルのインデックスを生成するツールです。サブディレクトリ内のファイルも対象に含みます。
+`miku-md-indexgen` は、指定ディレクトリ以下にある Markdown や JSON などのファイルのインデックスを生成するツールです。サブディレクトリ内のファイルも対象に含みます。
 
 `miku-md-indexgen` は、Mikuku's ソフトウェアシリーズのひとつとして提供されるツールです。
 
@@ -74,11 +96,11 @@ Each file entry includes:
 
 ## 特徴
 
-- 指定ディレクトリ以下の Markdown ファイルを対象に、ルートの `index.json` を生成する
+- 指定ディレクトリ以下の、指定した拡張子のファイルを対象に、ルートの `index.json` を生成する
 - 生成AI やプログラムが扱いやすい、フラットな `files` 配列を正本にする
 - 必要に応じて、人間向けの補助出力として `index.md` も生成できる
-- 各 Markdown ファイルから短い `summary` を抽出する
-- 各ファイルについて `name`, `path`, `directory`, `size`, `summary` を保持できる
+- Markdown ファイルから短い `summary` を抽出する
+- 各ファイルについて `name`, `path`, `ext`, `dir`, `size`, `summary` を保持できる
 
 ## ビルド
 
@@ -101,27 +123,49 @@ node dist/main.js <targetDir>
 node dist/main.js ./docs
 ```
 
-`./docs` 配下にネストしたサブディレクトリを含む Markdown ファイルがある場合、`./docs/index.json` を生成します。`--markdown` を付けた場合は `./docs/index.md` も生成します。
+タイトル指定例:
+
+```bash
+node dist/main.js ./docs --title "Docs Index"
+```
+
+詳細ログ例:
+
+```bash
+node dist/main.js ./docs --verbose
+```
+
+`./docs` 配下にネストしたサブディレクトリを含む対象ファイルがある場合、`./docs/index.json` を生成します。`--markdown` を付けた場合は `./docs/index.md` も生成します。
 
 この使い方は、生成AI や Agent Skills が参照する `references/` 配下の資料群をインデックス化する用途も想定しています。たとえば `./references` を対象に実行すると `./references/index.json` を生成でき、生成AI は各ファイルを個別に読む前に、利用可能な参照資料の全体像を把握しやすくなります。
 
 ## オプション
 
 - `--output`, `-o`: 出力ファイル名。デフォルトは `index.json`
+- `--title`: 生成する JSON のルートに任意の `title` を含める
 - `--markdown`: 出力先ディレクトリに `index.md` も生成する。デフォルトは無効
 - `--no-recursive`: ネストしたサブディレクトリを再帰走査しない
 - `--no-overwrite`: 既存の出力ファイルを上書きしない
+- `--include-ext`: 対象に含める拡張子をカンマ区切りで指定する。デフォルトは `md,json`
+- `--verbose`: 走査中ディレクトリ、検出した Markdown ファイル、出力先、`stat`、ファイル読み込み、`summary` 抽出、JSON 文字列化や書き込みを含む処理時間の内訳などの進行情報を表示する
 
 ## 出力
 
 生成される JSON は、`files` 配列を正本にしたフラット構造です。
 
+ルート要素は次を持ちます。
+
+- `title`（任意）
+- `basePath`
+- `files`
+
 各ファイル要素は次を持ちます。
 
 - `name`
 - `path`
-- `directory`
+- `ext`（たとえば `md` や `json`）
+- `dir`
 - `size`
 - `summary`（任意）
 
-`summary` は、最初の `#` 始まり見出し、または見出しより前の本文を最大 256 文字まで使って抽出します。
+`summary` は、最初の `#` 始まり見出し、または見出しより前の本文を最大 256 文字まで使って抽出します。`summary` を付与するのは Markdown ファイルだけです。

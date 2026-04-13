@@ -8,12 +8,15 @@ import {
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { afterEach, describe, expect, it } from "vitest";
+import { vi } from "vitest";
 
 import {
+  collectIndexableFiles,
   createIndexes,
   escapeMarkdownTableCell,
   extractSummary,
   parseArgs,
+  parseIncludeExtensions,
   sanitizeTextForIndex,
 } from "../src/main.js";
 
@@ -33,13 +36,22 @@ function createTempWorkspace(): string {
 
 describe("parseArgs", () => {
   it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--markdown", "--no-recursive", "--no-overwrite"])).toEqual({
+    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--verbose"])).toEqual({
       targetDir: "./docs",
       outputFileName: "SUMMARY.json",
+      title: "Docs Index",
       markdownOutput: true,
       recursive: false,
       overwrite: false,
+      verbose: true,
+      includeExtensions: ["md", "json"],
     });
+  });
+});
+
+describe("parseIncludeExtensions", () => {
+  it("normalizes a comma-separated extension list", () => {
+    expect(parseIncludeExtensions(".MD, json ,md")).toEqual(["md", "json"]);
   });
 });
 
@@ -87,45 +99,137 @@ describe("createIndexes", () => {
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
     writeFileSync(join(chapter1, "nested", "b.md"), "# B\n", "utf8");
     writeFileSync(join(chapter2, "c.md"), "Workbook: sample.xlsx\nSecond line\n# C\n", "utf8");
+    writeFileSync(join(chapter2, "data.json"), "{\n  \"title\": \"Data\"\n}\n", "utf8");
 
     const processed = createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      title: undefined,
       markdownOutput: false,
       recursive: true,
       overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
     });
 
     const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      title?: string;
       basePath: string;
-      files: Array<{ name: string; path: string; directory: string; size: number; summary?: string }>;
+      files: Array<{ name: string; path: string; ext: string; dir: string; size: number; summary?: string }>;
     };
 
     expect(processed).toBe(2);
+    expect(index.title).toBeUndefined();
     expect(index.basePath).toBe(".");
     expect(index.files).toEqual([
       {
         name: "a.md",
         path: "chapter1/a.md",
-        directory: "chapter1",
+        dir: "chapter1",
+        ext: "md",
         size: 4,
         summary: "A",
       },
       {
         name: "b.md",
         path: "chapter1/nested/b.md",
-        directory: "chapter1/nested",
+        dir: "chapter1/nested",
+        ext: "md",
         size: 4,
         summary: "B",
       },
       {
         name: "c.md",
         path: "chapter2/c.md",
-        directory: "chapter2",
+        dir: "chapter2",
+        ext: "md",
         size: 38,
         summary: "Workbook: sample.xlsx Second line",
       },
+      {
+        name: "data.json",
+        path: "chapter2/data.json",
+        dir: "chapter2",
+        ext: "json",
+        size: 22,
+      },
     ]);
+  });
+
+  it("collects markdown and json files", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(join(chapter1, "nested"), { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+    writeFileSync(join(chapter1, "b.json"), "{\n}\n", "utf8");
+    writeFileSync(join(chapter1, "nested", "c.txt"), "skip\n", "utf8");
+
+    expect(collectIndexableFiles(chapter1, true, ["md", "json"]).map((path) => path.replace(`${docsDir}/`, ""))).toEqual([
+      "chapter1/a.md",
+      "chapter1/b.json",
+    ]);
+  });
+
+  it("filters files by includeExtensions", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+    writeFileSync(join(chapter1, "b.json"), "{\n}\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["json"],
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      files: Array<{ name: string; path: string; ext: string; dir: string; summary?: string; size: number }>;
+    };
+
+    expect(index.files).toEqual([
+      {
+        name: "b.json",
+        path: "chapter1/b.json",
+        dir: "chapter1",
+        ext: "json",
+        size: 4,
+      },
+    ]);
+  });
+
+  it("writes title only when --title is specified", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      title: "Docs Index",
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      title?: string;
+    };
+
+    expect(index.title).toBe("Docs Index");
   });
 
   it("does not overwrite an existing root index when overwrite is disabled", () => {
@@ -140,9 +244,12 @@ describe("createIndexes", () => {
     createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      title: undefined,
       markdownOutput: false,
       recursive: true,
       overwrite: false,
+      verbose: false,
+      includeExtensions: ["md", "json"],
     });
 
     expect(readFileSync(join(docsDir, "index.json"), "utf8")).toBe("keep me\n");
@@ -159,12 +266,17 @@ describe("createIndexes", () => {
     createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      title: undefined,
       markdownOutput: true,
       recursive: true,
       overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
     });
 
-    expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain("| [chapter1/a.md](chapter1/a.md) | chapter1 | 4 | A |");
+    expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
+      "| [chapter1/a.md](chapter1/a.md) | md | chapter1 | 4 | A |",
+    );
   });
 
   it("escapes markdown table cells in index.md", () => {
@@ -178,13 +290,56 @@ describe("createIndexes", () => {
     createIndexes({
       targetDir: docsDir,
       outputFileName: "index.json",
+      title: undefined,
       markdownOutput: true,
       recursive: true,
       overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
     });
 
     expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
-      String.raw`| [dir\|name/a\|b.md](dir|name/a|b.md) | dir\|name | 13 | plain \| text |`,
+      String.raw`| [dir\|name/a\|b.md](dir|name/a|b.md) | md | dir\|name | 13 | plain \| text |`,
     );
+  });
+
+  it("prints progress and timing details in verbose mode", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let logs: string[] = [];
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+
+    try {
+      createIndexes({
+        targetDir: docsDir,
+        outputFileName: "index.json",
+        title: "Verbose Docs",
+        markdownOutput: false,
+        recursive: true,
+        overwrite: true,
+        verbose: true,
+        includeExtensions: ["md", "json"],
+      });
+      logs = logSpy.mock.calls.map((call) => call.join(" "));
+    } finally {
+      logSpy.mockRestore();
+    }
+
+    expect(logs).toContain(`verbose: target=${docsDir}`);
+    expect(logs).toContain("verbose: title=Verbose Docs");
+    expect(logs).toContain("verbose: include-ext=md,json");
+    expect(logs).toContain("verbose: subdirectories=1");
+    expect(logs).toContain("verbose: scanning-dir=chapter1");
+    expect(logs).toContain("verbose: found-file=chapter1/a.md");
+    expect(logs.some((line) => line.startsWith("verbose: timing.stat="))).toBe(true);
+    expect(logs.some((line) => line.startsWith("verbose: timing.readFile="))).toBe(true);
+    expect(logs.some((line) => line.startsWith("verbose: timing.summary="))).toBe(true);
+    expect(logs.some((line) => line.startsWith("verbose: timing.json.stringify="))).toBe(true);
+    expect(logs.some((line) => line.startsWith("verbose: timing.json.write="))).toBe(true);
+    expect(logs.some((line) => line.startsWith("verbose: timing.total="))).toBe(true);
   });
 });
