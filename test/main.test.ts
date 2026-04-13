@@ -88,14 +88,16 @@ describe("escapeMarkdownTableCell", () => {
 });
 
 describe("createIndexes", () => {
-  it("creates one root index file for direct subdirectories", () => {
+  it("creates one root index file including files in the target directory", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
     const chapter1 = join(docsDir, "chapter1");
     const chapter2 = join(docsDir, "chapter2");
 
+    mkdirSync(docsDir, { recursive: true });
     mkdirSync(join(chapter1, "nested"), { recursive: true });
     mkdirSync(chapter2, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
     writeFileSync(join(chapter1, "nested", "b.md"), "# B\n", "utf8");
     writeFileSync(join(chapter2, "c.md"), "Workbook: sample.xlsx\nSecond line\n# C\n", "utf8");
@@ -125,8 +127,8 @@ describe("createIndexes", () => {
       {
         name: "a.md",
         path: "chapter1/a.md",
-        dir: "chapter1",
         ext: "md",
+        dir: "chapter1",
         size: 4,
         summary: "A",
       },
@@ -152,6 +154,14 @@ describe("createIndexes", () => {
         dir: "chapter2",
         ext: "json",
         size: 22,
+      },
+      {
+        name: "root.md",
+        path: "root.md",
+        ext: "md",
+        dir: "",
+        size: 7,
+        summary: "Root",
       },
     ]);
   });
@@ -238,6 +248,7 @@ describe("createIndexes", () => {
     const chapter1 = join(docsDir, "chapter1");
 
     mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
     writeFileSync(join(docsDir, "index.json"), "keep me\n", "utf8");
 
@@ -260,7 +271,9 @@ describe("createIndexes", () => {
     const docsDir = join(workspace, "docs");
     const chapter1 = join(docsDir, "chapter1");
 
+    mkdirSync(docsDir, { recursive: true });
     mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
 
     createIndexes({
@@ -274,6 +287,9 @@ describe("createIndexes", () => {
       includeExtensions: ["md", "json"],
     });
 
+    expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
+      "| [root.md](root.md) | md |  | 7 | Root |",
+    );
     expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
       "| [chapter1/a.md](chapter1/a.md) | md | chapter1 | 4 | A |",
     );
@@ -333,7 +349,7 @@ describe("createIndexes", () => {
     expect(logs).toContain("verbose: title=Verbose Docs");
     expect(logs).toContain("verbose: include-ext=md,json");
     expect(logs).toContain("verbose: subdirectories=1");
-    expect(logs).toContain("verbose: scanning-dir=chapter1");
+    expect(logs).toContain("verbose: scanning-dir=.");
     expect(logs).toContain("verbose: found-file=chapter1/a.md");
     expect(logs.some((line) => line.startsWith("verbose: timing.stat="))).toBe(true);
     expect(logs.some((line) => line.startsWith("verbose: timing.readFile="))).toBe(true);

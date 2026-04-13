@@ -138,8 +138,8 @@ export function printHelp(): void {
   node dist/main.js <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--verbose]
 
 Description:
-  Generate a root JSON index that aggregates files found under the direct
-  subdirectories of the target directory. Markdown output is optional.
+  Generate a root JSON index that aggregates matching files found under
+  the target directory. Markdown output is optional.
 `);
 }
 
@@ -329,10 +329,6 @@ export function createIndexes(options: CliOptions): number {
     .sort((a, b) => a.localeCompare(b, "ja"));
   timings.subdirsMs = performance.now() - subdirsStart;
 
-  if (options.verbose) {
-    console.log(`verbose: subdirectories=${subdirs.length}`);
-  }
-
   const outputPath = join(targetPath, options.outputFileName);
   if (!options.overwrite) {
     const existing = statSync(outputPath, { throwIfNoEntry: false });
@@ -343,45 +339,43 @@ export function createIndexes(options: CliOptions): number {
   }
 
   const files: IndexFile[] = [];
+  if (options.verbose) {
+    console.log(`verbose: subdirectories=${subdirs.length}`);
+    console.log(`verbose: scanning-dir=.`);
+  }
 
-  for (const subdirPath of subdirs) {
+  const collectStart = performance.now();
+  const indexableFiles = collectIndexableFiles(targetPath, options.recursive, options.includeExtensions)
+    .filter((filePath) => resolve(filePath) !== resolve(outputPath));
+  timings.collectMs += performance.now() - collectStart;
+
+  for (const filePath of indexableFiles) {
+    const statStart = performance.now();
+    const size = statSync(filePath).size;
+    timings.statMs += performance.now() - statStart;
+
+    const readFileStart = performance.now();
+    const content = readFileSync(filePath, "utf8");
+    timings.readFileMs += performance.now() - readFileStart;
+
+    const ext = filePath.toLowerCase().split(".").at(-1) ?? "";
+    const summaryStart = performance.now();
+    const summary = ext === "md" ? extractSummary(content) : undefined;
+    timings.summaryMs += performance.now() - summaryStart;
+
+    const relativeFilePath = relative(targetPath, filePath).split("\\").join("/");
+    const file = {
+      name: relative(dirname(filePath), filePath).split("\\").join("/"),
+      path: relativeFilePath,
+      ext,
+      dir: relative(targetPath, dirname(filePath)).split("\\").join("/"),
+      size,
+      summary,
+    };
+    files.push(file);
+
     if (options.verbose) {
-      console.log(`verbose: scanning-dir=${formatVerbosePath(targetPath, subdirPath)}`);
-    }
-
-    const collectStart = performance.now();
-    const indexableFiles = collectIndexableFiles(subdirPath, options.recursive, options.includeExtensions)
-      .filter((filePath) => resolve(filePath) !== resolve(outputPath));
-    timings.collectMs += performance.now() - collectStart;
-
-    for (const filePath of indexableFiles) {
-      const statStart = performance.now();
-      const size = statSync(filePath).size;
-      timings.statMs += performance.now() - statStart;
-
-      const readFileStart = performance.now();
-      const content = readFileSync(filePath, "utf8");
-      timings.readFileMs += performance.now() - readFileStart;
-
-      const ext = filePath.toLowerCase().split(".").at(-1) ?? "";
-      const summaryStart = performance.now();
-      const summary = ext === "md" ? extractSummary(content) : undefined;
-      timings.summaryMs += performance.now() - summaryStart;
-
-      const relativeFilePath = relative(targetPath, filePath).split("\\").join("/");
-      const file = {
-        name: relative(dirname(filePath), filePath).split("\\").join("/"),
-        path: relativeFilePath,
-        ext,
-        dir: relative(targetPath, dirname(filePath)).split("\\").join("/"),
-        size,
-        summary,
-      };
-      files.push(file);
-
-      if (options.verbose) {
-        console.log(`verbose: found-file=${relativeFilePath}`);
-      }
+      console.log(`verbose: found-file=${relativeFilePath}`);
     }
   }
 

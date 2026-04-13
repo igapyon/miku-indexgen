@@ -49,7 +49,7 @@ Verbose example:
 node dist/main.js ./docs --verbose
 ```
 
-If `./docs` contains Markdown or JSON files in nested directories, the command generates `./docs/index.json`. When `--markdown` is specified, it also generates `./docs/index.md`.
+The command generates `./docs/index.json` for matching files under `./docs`, including files in nested directories. When `--markdown` is specified, it also generates `./docs/index.md`. Files directly under `./docs` are also included.
 
 This usage is also intended for indexing reference documents used by AI agents and Agent Skills. For example, running the tool against `./references` generates `./references/index.json`, allowing an AI agent to understand the available reference files before reading them one by one.
 
@@ -135,7 +135,8 @@ node dist/main.js ./docs --title "Docs Index"
 node dist/main.js ./docs --verbose
 ```
 
-`./docs` 配下にネストしたサブディレクトリを含む対象ファイルがある場合、`./docs/index.json` を生成します。`--markdown` を付けた場合は `./docs/index.md` も生成します。
+`./docs` 配下にある対象ファイルをインデックス化し、`./docs/index.json` を生成します。ネストしたサブディレクトリ内の対象ファイルも含みます。`--markdown` を付けた場合は `./docs/index.md` も生成します。
+`./docs` 直下の対象ファイルも含まれます。
 
 この使い方は、生成AI や Agent Skills が参照する `references/` 配下の資料群をインデックス化する用途も想定しています。たとえば `./references` を対象に実行すると `./references/index.json` を生成でき、生成AI は各ファイルを個別に読む前に、利用可能な参照資料の全体像を把握しやすくなります。
 
