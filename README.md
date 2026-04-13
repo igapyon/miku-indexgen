@@ -49,6 +49,12 @@ Verbose example:
 node dist/main.js ./docs --verbose
 ```
 
+Shift_JIS input/output example:
+
+```bash
+node dist/main.js ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
+```
+
 The command generates `./docs/index.json` for matching files under `./docs`, including files in nested directories. When `--markdown` is specified, it also generates `./docs/index.md`. Files directly under `./docs` are also included.
 
 This usage is also intended for indexing reference documents used by AI agents and Agent Skills. For example, running the tool against `./references` generates `./references/index.json`, allowing an AI agent to understand the available reference files before reading them one by one.
@@ -61,6 +67,8 @@ This usage is also intended for indexing reference documents used by AI agents a
 - `--no-recursive`: Do not recurse into nested subdirectories
 - `--no-overwrite`: Do not overwrite existing output files
 - `--include-ext`: Comma-separated file extensions to include. Default: `md,json`
+- `--input-encoding`: Text encoding used when reading input files. Supported: `utf8`, `shift_jis`. Default: `utf8`
+- `--output-encoding`: Text encoding used when writing `index.json` and `index.md`. Supported: `utf8`, `shift_jis`. Default: `utf8`
 - `--verbose`: Print progress details such as scanned directories, discovered Markdown files, output paths, and timing breakdowns including `stat`, file read, summary extraction, and JSON stringify/write
 
 ## Output
@@ -135,6 +143,12 @@ node dist/main.js ./docs --title "Docs Index"
 node dist/main.js ./docs --verbose
 ```
 
+Shift_JIS 入出力例:
+
+```bash
+node dist/main.js ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
+```
+
 `./docs` 配下にある対象ファイルをインデックス化し、`./docs/index.json` を生成します。ネストしたサブディレクトリ内の対象ファイルも含みます。`--markdown` を付けた場合は `./docs/index.md` も生成します。
 `./docs` 直下の対象ファイルも含まれます。
 
@@ -148,6 +162,8 @@ node dist/main.js ./docs --verbose
 - `--no-recursive`: ネストしたサブディレクトリを再帰走査しない
 - `--no-overwrite`: 既存の出力ファイルを上書きしない
 - `--include-ext`: 対象に含める拡張子をカンマ区切りで指定する。デフォルトは `md,json`
+- `--input-encoding`: 入力ファイルを読むときの文字エンコーディング。対応: `utf8`, `shift_jis`。デフォルトは `utf8`
+- `--output-encoding`: `index.json` と `index.md` を書くときの文字エンコーディング。対応: `utf8`, `shift_jis`。デフォルトは `utf8`
 - `--verbose`: 走査中ディレクトリ、検出した Markdown ファイル、出力先、`stat`、ファイル読み込み、`summary` 抽出、JSON 文字列化や書き込みを含む処理時間の内訳などの進行情報を表示する
 
 ## 出力
