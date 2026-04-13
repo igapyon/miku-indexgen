@@ -29,7 +29,7 @@ afterEach(() => {
 });
 
 function createTempWorkspace(): string {
-  const dir = mkdtempSync(join(tmpdir(), "miku-md-indexgen-test-"));
+  const dir = mkdtempSync(join(tmpdir(), "miku-indexgen-test-"));
   tempDirs.push(dir);
   return dir;
 }
