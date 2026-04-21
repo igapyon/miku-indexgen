@@ -14,7 +14,7 @@ By using this index, AI agents can grasp the overall file set in advance and red
 - Uses a flat `files` array that is easy for AI agents and programs to consume
 - Optionally generates `index.md` as a companion human-readable index
 - Extracts a short `summary` from Markdown files
-- Includes root-level `generator` metadata identifying `miku-indexgen`
+- Includes root-level `generator` metadata identifying `miku-indexgen` by default
 - Includes `name`, `path`, `ext`, `dir`, `size`, and optional `summary` for each file
 
 ## Build
@@ -63,6 +63,24 @@ Verbose example:
 npx miku-indexgen ./docs --verbose
 ```
 
+JSON summary example:
+
+```bash
+npx miku-indexgen ./docs --json-summary-path /title,/metadata/title,/description
+```
+
+For package-style JSON files, prefer the package name before the description:
+
+```bash
+npx miku-indexgen ./docs --json-summary-path /name,/description
+```
+
+For nested metadata, list the most specific paths first:
+
+```bash
+npx miku-indexgen ./references --json-summary-path /frontmatter/title,/metadata/title,/title
+```
+
 Shift_JIS input/output example:
 
 ```bash
@@ -78,6 +96,8 @@ This usage is also intended for indexing reference documents used by AI agents a
 - `--output`, `-o`: Output file name. Default: `index.json`
 - `--title`: Optional root-level title to include in the generated JSON
 - `--markdown`: Also generate `index.md` in the output directory. Default: disabled
+- `--no-generator`: Do not include root-level `generator` metadata in the generated JSON
+- `--json-summary-path`: Comma-separated JSON Pointer list used to extract `summary` from JSON files. Default: disabled
 - `--no-recursive`: Do not recurse into nested subdirectories
 - `--no-overwrite`: Do not overwrite existing output files
 - `--include-ext`: Comma-separated file extensions to include. Default: `md,json`
@@ -92,7 +112,7 @@ The generated JSON uses a flat `files` array as the canonical structure.
 Root-level fields include:
 
 - `title` (optional)
-- `generator`
+- `generator` (omitted when `--no-generator` is specified)
 - `basePath`
 - `files`
 
@@ -105,7 +125,9 @@ Each file entry includes:
 - `size`
 - `summary` (optional)
 
-`summary` is derived from the first `#`-prefixed heading, or from the leading body text up to 256 characters when no heading appears first. Only Markdown files get a `summary`.
+For Markdown files, `summary` is derived from the first `#`-prefixed heading, or from the leading body text up to 256 characters when no heading appears first.
+
+For JSON files, `summary` is omitted by default. When `--json-summary-path` is specified, each path is treated as a JSON Pointer, evaluated from left to right, and the first string value found is used as `summary`. Invalid JSON files, missing paths, and non-string values are ignored.
 
 ---
 
@@ -123,7 +145,7 @@ Each file entry includes:
 - 生成AI やプログラムが扱いやすい、フラットな `files` 配列を正本にする
 - 必要に応じて、人間向けの補助出力として `index.md` も生成できる
 - Markdown ファイルから短い `summary` を抽出する
-- ルートに生成ツールを示す `generator` メタデータを含める
+- デフォルトで、ルートに生成ツールを示す `generator` メタデータを含める
 - 各ファイルについて `name`, `path`, `ext`, `dir`, `size`, `summary` を保持できる
 
 ## ビルド
@@ -172,6 +194,24 @@ npx miku-indexgen ./docs --title "Docs Index"
 npx miku-indexgen ./docs --verbose
 ```
 
+JSON summary 指定例:
+
+```bash
+npx miku-indexgen ./docs --json-summary-path /title,/metadata/title,/description
+```
+
+`package.json` のような JSON では、説明より先にパッケージ名を優先できます。
+
+```bash
+npx miku-indexgen ./docs --json-summary-path /name,/description
+```
+
+ネストしたメタデータを優先したい場合は、具体的なパスから順に並べます。
+
+```bash
+npx miku-indexgen ./references --json-summary-path /frontmatter/title,/metadata/title,/title
+```
+
 Shift_JIS 入出力例:
 
 ```bash
@@ -188,6 +228,8 @@ npx miku-indexgen ./docs --input-encoding shift_jis --output-encoding shift_jis 
 - `--output`, `-o`: 出力ファイル名。デフォルトは `index.json`
 - `--title`: 生成する JSON のルートに任意の `title` を含める
 - `--markdown`: 出力先ディレクトリに `index.md` も生成する。デフォルトは無効
+- `--no-generator`: 生成する JSON のルートに `generator` メタデータを含めない
+- `--json-summary-path`: JSON ファイルから `summary` を抽出するための JSON Pointer をカンマ区切りで指定する。デフォルトは無効
 - `--no-recursive`: ネストしたサブディレクトリを再帰走査しない
 - `--no-overwrite`: 既存の出力ファイルを上書きしない
 - `--include-ext`: 対象に含める拡張子をカンマ区切りで指定する。デフォルトは `md,json`
@@ -202,7 +244,7 @@ npx miku-indexgen ./docs --input-encoding shift_jis --output-encoding shift_jis 
 ルート要素は次を持ちます。
 
 - `title`（任意）
-- `generator`
+- `generator`（`--no-generator` 指定時は省略）
 - `basePath`
 - `files`
 
@@ -215,4 +257,6 @@ npx miku-indexgen ./docs --input-encoding shift_jis --output-encoding shift_jis 
 - `size`
 - `summary`（任意）
 
-`summary` は、最初の `#` 始まり見出し、または見出しより前の本文を最大 256 文字まで使って抽出します。`summary` を付与するのは Markdown ファイルだけです。
+Markdown ファイルの `summary` は、最初の `#` 始まり見出し、または見出しより前の本文を最大 256 文字まで使って抽出します。
+
+JSON ファイルの `summary` はデフォルトでは省略します。`--json-summary-path` を指定した場合は、各パスを JSON Pointer として左から順に評価し、最初に見つかった文字列値を `summary` に使います。不正な JSON、存在しないパス、文字列以外の値は無視します。

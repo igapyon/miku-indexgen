@@ -4,6 +4,7 @@ import { performance } from "node:perf_hooks";
 import { readTextFile, writeTextFile } from "./encoding.js";
 import { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
 import { buildMarkdownIndexContent, extractSummary } from "./markdown.js";
+import { extractJsonSummary } from "./json-summary.js";
 import { getFileExtension, getFileName, toPosixPath } from "./path-utils.js";
 import type { CreateIndexTimings, VerboseLogger } from "./logging.js";
 import type { CliOptions, IndexFile, RootIndex } from "./types.js";
@@ -70,6 +71,7 @@ function buildIndexFile(
   filePath: string,
   targetPath: string,
   inputEncoding: string,
+  jsonSummaryPaths: string[] | undefined,
   timings: CreateIndexTimings,
 ): IndexFile {
   const statStart = performance.now();
@@ -77,7 +79,7 @@ function buildIndexFile(
   timings.statMs += performance.now() - statStart;
 
   const ext = getFileExtension(filePath);
-  const summary = ext === "md" ? readMarkdownSummary(filePath, inputEncoding, timings) : undefined;
+  const summary = readSummary(filePath, ext, jsonSummaryPaths, inputEncoding, timings);
 
   return {
     name: getFileName(filePath),
@@ -87,6 +89,24 @@ function buildIndexFile(
     size,
     summary,
   };
+}
+
+function readSummary(
+  filePath: string,
+  ext: string,
+  jsonSummaryPaths: string[] | undefined,
+  inputEncoding: string,
+  timings: CreateIndexTimings,
+): string | undefined {
+  if (ext === "md") {
+    return readMarkdownSummary(filePath, inputEncoding, timings);
+  }
+
+  if (ext === "json" && jsonSummaryPaths && jsonSummaryPaths.length > 0) {
+    return readJsonSummary(filePath, inputEncoding, jsonSummaryPaths, timings);
+  }
+
+  return undefined;
 }
 
 function readMarkdownSummary(filePath: string, inputEncoding: string, timings: CreateIndexTimings): string | undefined {
@@ -100,15 +120,32 @@ function readMarkdownSummary(filePath: string, inputEncoding: string, timings: C
   return summary;
 }
 
+function readJsonSummary(
+  filePath: string,
+  inputEncoding: string,
+  jsonSummaryPaths: string[],
+  timings: CreateIndexTimings,
+): string | undefined {
+  const readFileStart = performance.now();
+  const content = readTextFile(filePath, inputEncoding);
+  timings.readFileMs += performance.now() - readFileStart;
+
+  const summaryStart = performance.now();
+  const summary = extractJsonSummary(content, jsonSummaryPaths);
+  timings.summaryMs += performance.now() - summaryStart;
+  return summary;
+}
+
 export function buildIndexContent(
   title: string | undefined,
   targetPath: string,
   files: IndexFile[],
   outputPath: string,
+  includeGeneratorMetadata = true,
 ): string {
   const index: RootIndex = {
     ...(title ? { title } : {}),
-    generator: GENERATOR_NAME,
+    ...(includeGeneratorMetadata ? { generator: GENERATOR_NAME } : {}),
     basePath: toPosixPath(relative(dirname(outputPath), targetPath)) || ".",
     files,
   };
@@ -162,7 +199,7 @@ function collectIndexFiles(
   timings.collectMs += performance.now() - collectStart;
 
   const files = indexableFiles.map((filePath) => {
-    const file = buildIndexFile(filePath, targetPath, options.inputEncoding, timings);
+    const file = buildIndexFile(filePath, targetPath, options.inputEncoding, options.jsonSummaryPaths, timings);
     logger.log(`found-file=${file.path}`);
     return file;
   });
@@ -181,7 +218,13 @@ function writeIndexOutputs(
   mkdirSync(dirname(outputPaths.jsonPath), { recursive: true });
 
   const jsonStringifyStart = performance.now();
-  const jsonContent = buildIndexContent(options.title, targetPath, files, outputPaths.jsonPath);
+  const jsonContent = buildIndexContent(
+    options.title,
+    targetPath,
+    files,
+    outputPaths.jsonPath,
+    options.includeGeneratorMetadata !== false,
+  );
   timings.jsonStringifyMs = performance.now() - jsonStringifyStart;
 
   const jsonWriteStart = performance.now();

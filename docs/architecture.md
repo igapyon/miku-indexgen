@@ -9,8 +9,11 @@ This file describes the software-specific structure and behavior.
 - Module format: Node ESM
 - Primary output: root `index.json`
 - `index.json` uses a flat `files` array as the canonical structure
-- Root metadata includes `generator`, optional `title`, and `basePath`
+- Root metadata includes optional `generator`, optional `title`, and `basePath`
+- `generator` is included by default and can be omitted with `--no-generator`
 - Each file entry includes at least `name`, `path`, `ext`, `dir`, `size`, and optional `summary`
+- Markdown `summary` is extracted from headings or leading body text
+- JSON `summary` is disabled by default and can be extracted from configured JSON Pointer paths
 - `index.md` can also be generated as an optional companion output
 
 ## Build Flow
@@ -25,6 +28,7 @@ This file describes the software-specific structure and behavior.
 - `src/main.ts`: CLI entry point and public re-exports
 - `src/cli.ts`: command-line argument parsing and help text
 - `src/indexer.ts`: directory scanning and index generation
+- `src/json-summary.ts`: JSON Pointer based summary extraction for JSON files
 - `src/logging.ts`: verbose logging and timing helpers
 - `src/markdown.ts`: Markdown summary and `index.md` formatting
 - `src/encoding.ts`: text encoding helpers

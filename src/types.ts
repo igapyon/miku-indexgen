@@ -3,6 +3,8 @@ export type CliOptions = {
   outputFileName: string;
   title?: string;
   markdownOutput: boolean;
+  includeGeneratorMetadata?: boolean;
+  jsonSummaryPaths?: string[];
   recursive: boolean;
   overwrite: boolean;
   verbose: boolean;
@@ -22,7 +24,7 @@ export type IndexFile = {
 
 export type RootIndex = {
   title?: string;
-  generator: string;
+  generator?: string;
   basePath: string;
   files: IndexFile[];
 };

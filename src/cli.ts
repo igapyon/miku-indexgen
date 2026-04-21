@@ -1,5 +1,6 @@
 import type { CliOptions } from "./types.js";
 import { parseEncodingOption } from "./encoding.js";
+import { parseJsonSummaryPaths } from "./json-summary.js";
 
 const DEFAULT_INCLUDE_EXTENSIONS = ["md", "json"];
 const DEFAULT_TEXT_ENCODING = "utf8";
@@ -37,6 +38,8 @@ export function parseArgs(argv: string[]): CliOptions {
   let outputFileName = "index.json";
   let title: string | undefined;
   let markdownOutput = false;
+  let includeGeneratorMetadata = true;
+  let jsonSummaryPaths: string[] | undefined;
   let recursive = true;
   let overwrite = true;
   let verbose = false;
@@ -66,6 +69,19 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--markdown") {
       markdownOutput = true;
+      continue;
+    }
+
+    if (arg === "--no-generator") {
+      includeGeneratorMetadata = false;
+      continue;
+    }
+
+    if (arg === "--json-summary-path") {
+      jsonSummaryPaths = parseJsonSummaryPaths(
+        readRequiredOptionValue(argv, i, "--json-summary-path", "a comma-separated JSON Pointer list"),
+      );
+      i += 1;
       continue;
     }
 
@@ -116,6 +132,8 @@ export function parseArgs(argv: string[]): CliOptions {
     outputFileName,
     title,
     markdownOutput,
+    includeGeneratorMetadata,
+    jsonSummaryPaths,
     recursive,
     overwrite,
     verbose,
@@ -128,7 +146,7 @@ export function parseArgs(argv: string[]): CliOptions {
 export function printHelp(): void {
   console.log(`Usage:
   npm run build
-  miku-indexgen <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
+  miku-indexgen <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
 
 Description:
   Generate a root JSON index that aggregates matching files found under

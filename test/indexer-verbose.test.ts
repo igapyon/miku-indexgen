@@ -26,6 +26,7 @@ describe("createIndexes verbose output", () => {
         overwrite: true,
         verbose: true,
         includeExtensions: ["md", "json"],
+        jsonSummaryPaths: ["/title", "/name"],
         inputEncoding: "utf8",
         outputEncoding: "utf8",
       });
@@ -37,6 +38,8 @@ describe("createIndexes verbose output", () => {
     expect(logs).toContain(`verbose: target=${docsDir}`);
     expect(logs).toContain("verbose: title=Verbose Docs");
     expect(logs).toContain("verbose: include-ext=md,json");
+    expect(logs).toContain("verbose: generator=enabled");
+    expect(logs).toContain("verbose: json-summary-path=/title,/name");
     expect(logs).toContain("verbose: input-encoding=utf8");
     expect(logs).toContain("verbose: output-encoding=utf8");
     expect(logs).toContain("verbose: subdirectories=1");
