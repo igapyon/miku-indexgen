@@ -9,7 +9,8 @@ This file describes the software-specific structure and behavior.
 - Module format: Node ESM
 - Primary output: root `index.json`
 - `index.json` uses a flat `files` array as the canonical structure
-- Each file entry includes at least `name`, `path`, `directory`, `size`, and optional `summary`
+- Root metadata includes `generator`, optional `title`, and `basePath`
+- Each file entry includes at least `name`, `path`, `ext`, `dir`, `size`, and optional `summary`
 - `index.md` can also be generated as an optional companion output
 
 ## Build Flow
@@ -21,8 +22,16 @@ This file describes the software-specific structure and behavior.
 
 ## Main Files
 
-- `src/main.ts`
-- `test/main.test.ts`
+- `src/main.ts`: CLI entry point and public re-exports
+- `src/cli.ts`: command-line argument parsing and help text
+- `src/indexer.ts`: directory scanning and index generation
+- `src/logging.ts`: verbose logging and timing helpers
+- `src/markdown.ts`: Markdown summary and `index.md` formatting
+- `src/encoding.ts`: text encoding helpers
+- `src/path-utils.ts`: path and extension normalization helpers
+- `src/types.ts`: shared TypeScript types
+- `test/*.test.ts`
+- `test/test-utils.ts`
 - `package.json`
 - `tsconfig.json`
 - `.gitignore`
@@ -33,5 +42,5 @@ This file describes the software-specific structure and behavior.
 ```bash
 npm install
 npm run build
-node dist/main.js <targetDir>
+npx miku-indexgen <targetDir>
 ```
