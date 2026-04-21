@@ -22,11 +22,13 @@
 - `index.json` のルートに `generator` を置く
 - `generator` は生成ツール識別用のメタデータで、各 `files` 要素には持たせない
 - `generator` の値はまず文字列で扱い、`miku-indexgen` を入れる
+- `--no-generator` を指定した場合は、`index.json` のルートに `generator` を出力しない
 - バージョンなどの詳細が必要になったら、将来の互換拡張でオブジェクト化を検討する
 
 ## 実装済みメモ
 
 - `workbook: ファイル名` のような非見出し先頭行も、そのまま `summary` 候補にできる
+- `--json-summary-path` 指定時は、JSON Pointer で JSON ファイル内の文字列値を探し、最初に見つかった値を `summary` にできる
 
 ## 実装済み: CLI オプション
 

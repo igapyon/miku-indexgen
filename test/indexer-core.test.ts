@@ -167,4 +167,60 @@ describe("createIndexes", () => {
 
     expect(index.title).toBe("Docs Index");
   });
+
+  it("omits generator metadata when disabled", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+
+    mkdirSync(docsDir, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      title: undefined,
+      markdownOutput: false,
+      includeGeneratorMetadata: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      generator?: string;
+    };
+
+    expect(index.generator).toBeUndefined();
+  });
+
+  it("uses the first matching JSON summary path when configured", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+
+    mkdirSync(docsDir, { recursive: true });
+    writeFileSync(join(docsDir, "data.json"), "{\n  \"metadata\": {\n    \"title\": \"Data Title\"\n  },\n  \"description\": \"Fallback\"\n}\n", "utf8");
+
+    createIndexes({
+      targetDir: docsDir,
+      outputFileName: "index.json",
+      title: undefined,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+      jsonSummaryPaths: ["/title", "/metadata/title", "/description"],
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      files: Array<{ path: string; summary?: string }>;
+    };
+
+    expect(index.files[0]).toMatchObject({ path: "data.json", summary: "Data Title" });
+  });
 });

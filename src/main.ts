@@ -8,6 +8,7 @@ export type { CliOptions, IndexFile, RootIndex } from "./types.js";
 export { HelpRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "./cli.js";
 export { normalizeEncodingName, parseEncodingOption, readTextFile, writeTextFile } from "./encoding.js";
 export { collectIndexableFiles, buildIndexContent, createIndexes } from "./indexer.js";
+export { extractJsonSummary, getJsonPointerValue, parseJsonSummaryPaths } from "./json-summary.js";
 export { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
 export {
   buildMarkdownIndexContent,

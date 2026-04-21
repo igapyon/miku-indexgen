@@ -57,6 +57,10 @@ export function logVerboseStart(
     logger.log(`title=${options.title}`);
   }
   logger.log(`include-ext=${options.includeExtensions.join(",")}`);
+  logger.log(`generator=${options.includeGeneratorMetadata !== false ? "enabled" : "disabled"}`);
+  if (options.jsonSummaryPaths && options.jsonSummaryPaths.length > 0) {
+    logger.log(`json-summary-path=${options.jsonSummaryPaths.join(",")}`);
+  }
   logger.log(`input-encoding=${options.inputEncoding}`);
   logger.log(`output-encoding=${options.outputEncoding}`);
 }

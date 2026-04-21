@@ -4,11 +4,13 @@ import { HelpRequestedError, parseArgs, parseIncludeExtensions, printHelp } from
 
 describe("parseArgs", () => {
   it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
+    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
       targetDir: "./docs",
       outputFileName: "SUMMARY.json",
       title: "Docs Index",
       markdownOutput: true,
+      includeGeneratorMetadata: false,
+      jsonSummaryPaths: ["/title", "/metadata/name"],
       recursive: false,
       overwrite: false,
       verbose: true,
@@ -16,6 +18,10 @@ describe("parseArgs", () => {
       inputEncoding: "shift_jis",
       outputEncoding: "shift_jis",
     });
+  });
+
+  it("enables generator metadata by default", () => {
+    expect(parseArgs(["./docs"]).includeGeneratorMetadata).toBe(true);
   });
 });
 
@@ -44,5 +50,7 @@ describe("printHelp", () => {
     }
 
     expect(output).toContain("miku-indexgen <targetDir>");
+    expect(output).toContain("--no-generator");
+    expect(output).toContain("--json-summary-path");
   });
 });
