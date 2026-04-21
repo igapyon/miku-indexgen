@@ -14,6 +14,7 @@ By using this index, AI agents can grasp the overall file set in advance and red
 - Uses a flat `files` array that is easy for AI agents and programs to consume
 - Optionally generates `index.md` as a companion human-readable index
 - Extracts a short `summary` from Markdown files
+- Includes root-level `generator` metadata identifying `miku-indexgen`
 - Includes `name`, `path`, `ext`, `dir`, `size`, and optional `summary` for each file
 
 ## Build
@@ -25,34 +26,47 @@ npm run build
 
 `npm run build` performs a full rebuild by clearing `dist/`, compiling TypeScript, running tests, and generating `workspace/index.json` and `workspace/index.md` from this repository.
 
+## Install
+
+```bash
+npx miku-indexgen <targetDir>
+```
+
+Or install globally:
+
+```bash
+npm install -g miku-indexgen
+miku-indexgen <targetDir>
+```
+
 ## Usage
 
 ```bash
-node dist/main.js <targetDir>
+npx miku-indexgen <targetDir>
 ```
 
 Example:
 
 ```bash
-node dist/main.js ./docs
+npx miku-indexgen ./docs
 ```
 
 Title example:
 
 ```bash
-node dist/main.js ./docs --title "Docs Index"
+npx miku-indexgen ./docs --title "Docs Index"
 ```
 
 Verbose example:
 
 ```bash
-node dist/main.js ./docs --verbose
+npx miku-indexgen ./docs --verbose
 ```
 
 Shift_JIS input/output example:
 
 ```bash
-node dist/main.js ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
+npx miku-indexgen ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
 ```
 
 The command generates `./docs/index.json` for matching files under `./docs`, including files in nested directories. When `--markdown` is specified, it also generates `./docs/index.md`. Files directly under `./docs` are also included.
@@ -78,6 +92,7 @@ The generated JSON uses a flat `files` array as the canonical structure.
 Root-level fields include:
 
 - `title` (optional)
+- `generator`
 - `basePath`
 - `files`
 
@@ -108,6 +123,7 @@ Each file entry includes:
 - 生成AI やプログラムが扱いやすい、フラットな `files` 配列を正本にする
 - 必要に応じて、人間向けの補助出力として `index.md` も生成できる
 - Markdown ファイルから短い `summary` を抽出する
+- ルートに生成ツールを示す `generator` メタデータを含める
 - 各ファイルについて `name`, `path`, `ext`, `dir`, `size`, `summary` を保持できる
 
 ## ビルド
@@ -119,34 +135,47 @@ npm run build
 
 `npm run build` は `dist/` を削除してから TypeScript をビルドし、テストを実行したうえで、このリポジトリを入力にした `workspace/index.json` と `workspace/index.md` を生成します。
 
+## インストール
+
+```bash
+npx miku-indexgen <targetDir>
+```
+
+またはグローバルインストール:
+
+```bash
+npm install -g miku-indexgen
+miku-indexgen <targetDir>
+```
+
 ## 使い方
 
 ```bash
-node dist/main.js <targetDir>
+npx miku-indexgen <targetDir>
 ```
 
 例:
 
 ```bash
-node dist/main.js ./docs
+npx miku-indexgen ./docs
 ```
 
 タイトル指定例:
 
 ```bash
-node dist/main.js ./docs --title "Docs Index"
+npx miku-indexgen ./docs --title "Docs Index"
 ```
 
 詳細ログ例:
 
 ```bash
-node dist/main.js ./docs --verbose
+npx miku-indexgen ./docs --verbose
 ```
 
 Shift_JIS 入出力例:
 
 ```bash
-node dist/main.js ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
+npx miku-indexgen ./docs --input-encoding shift_jis --output-encoding shift_jis --markdown
 ```
 
 `./docs` 配下にある対象ファイルをインデックス化し、`./docs/index.json` を生成します。ネストしたサブディレクトリ内の対象ファイルも含みます。`--markdown` を付けた場合は `./docs/index.md` も生成します。
@@ -173,6 +202,7 @@ node dist/main.js ./docs --input-encoding shift_jis --output-encoding shift_jis 
 ルート要素は次を持ちます。
 
 - `title`（任意）
+- `generator`
 - `basePath`
 - `files`
 
