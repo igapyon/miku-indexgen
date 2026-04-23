@@ -1,6 +1,6 @@
 {
   "name": "miku-indexgen",
-  "version": "0.1.0",
+  "version": "1.0.1",
   "description": "Minimal Node.js CLI to generate flat JSON and Markdown file indexes for AI agents and scripts.",
   "license": "Apache-2.0",
   "type": "module",
@@ -36,7 +36,7 @@
   },
   "scripts": {
     "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
-    "build": "npm run clean && tsc -p tsconfig.json && node --eval \"import { chmodSync } from 'node:fs'; chmodSync('dist/main.js', 0o755);\" && npm test && node dist/main.js . --output workspace/index.json --markdown",
+    "build": "npm run clean && tsc -p tsconfig.json && node --eval \"import { chmodSync } from 'node:fs'; chmodSync('dist/main.js', 0o755);\" && npm test && node dist/main.js --input-directory . --output-directory workspace --markdown",
     "pack:check": "npm pack --dry-run",
     "start": "node dist/main.js",
     "test": "vitest run"

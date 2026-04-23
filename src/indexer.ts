@@ -10,6 +10,7 @@ import type { CreateIndexTimings, VerboseLogger } from "./logging.js";
 import type { CliOptions, IndexFile, RootIndex } from "./types.js";
 
 const GENERATOR_NAME = "miku-indexgen";
+const JSON_OUTPUT_FILE_NAME = "index.json";
 const MARKDOWN_OUTPUT_FILE_NAME = "index.md";
 
 type OutputPaths = {
@@ -32,8 +33,8 @@ export function collectIndexableFiles(
   return collectIndexableFilesWithSet(dirPath, recursive, allowedExtensions, listVisibleEntries(dirPath));
 }
 
-function getOutputPaths(targetPath: string, options: CliOptions): OutputPaths {
-  const jsonPath = join(targetPath, options.outputFileName);
+function getOutputPaths(outputDirectoryPath: string, options: CliOptions): OutputPaths {
+  const jsonPath = join(outputDirectoryPath, JSON_OUTPUT_FILE_NAME);
   return {
     jsonPath,
     ...(options.markdownOutput ? { markdownPath: join(dirname(jsonPath), MARKDOWN_OUTPUT_FILE_NAME) } : {}),
@@ -244,15 +245,16 @@ function writeIndexOutputs(
 
 export function createIndexes(options: CliOptions): number {
   const totalStart = performance.now();
-  const targetPath = resolve(options.targetDir);
+  const targetPath = resolve(options.inputDirectory);
+  const outputDirectoryPath = resolve(options.outputDirectory ?? options.inputDirectory);
   const targetStat = statSync(targetPath, { throwIfNoEntry: false });
 
   if (!targetStat?.isDirectory()) {
-    throw new Error(`Target directory does not exist: ${targetPath}`);
+    throw new Error(`Input directory does not exist: ${targetPath}`);
   }
 
   const timings = createEmptyTimings();
-  const outputPaths = getOutputPaths(targetPath, options);
+  const outputPaths = getOutputPaths(outputDirectoryPath, options);
   const logger = createVerboseLogger(options.verbose);
   logVerboseStart(options, targetPath, outputPaths, logger);
 

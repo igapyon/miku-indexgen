@@ -16,8 +16,7 @@ describe("createIndexes encoding support", () => {
     writeFileSync(join(chapter1, "a.md"), iconv.encode("# 日本語\n本文\n", "shift_jis"));
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: false,
       recursive: true,
@@ -44,8 +43,7 @@ describe("createIndexes encoding support", () => {
     writeFileSync(join(chapter1, "a.md"), "# 日本語\n本文\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: "資料一覧",
       markdownOutput: true,
       recursive: true,

@@ -22,8 +22,7 @@ describe("createIndexes", () => {
     writeFileSync(join(chapter2, "data.json"), "{\n  \"title\": \"Data\"\n}\n", "utf8");
 
     const processed = createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: false,
       recursive: true,
@@ -114,8 +113,7 @@ describe("createIndexes", () => {
     writeFileSync(join(chapter1, "b.json"), "{\n}\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       markdownOutput: false,
       recursive: true,
       overwrite: true,
@@ -149,8 +147,7 @@ describe("createIndexes", () => {
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: "Docs Index",
       markdownOutput: false,
       recursive: true,
@@ -176,8 +173,7 @@ describe("createIndexes", () => {
     writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: false,
       includeGeneratorMetadata: false,
@@ -204,8 +200,7 @@ describe("createIndexes", () => {
     writeFileSync(join(docsDir, "data.json"), "{\n  \"metadata\": {\n    \"title\": \"Data Title\"\n  },\n  \"description\": \"Fallback\"\n}\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: false,
       recursive: true,
@@ -222,5 +217,45 @@ describe("createIndexes", () => {
     };
 
     expect(index.files[0]).toMatchObject({ path: "data.json", summary: "Data Title" });
+  });
+
+  it("writes outputs under outputDirectory when specified", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const outDir = join(workspace, "out");
+
+    mkdirSync(docsDir, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
+
+    createIndexes({
+      inputDirectory: docsDir,
+      outputDirectory: outDir,
+      title: undefined,
+      markdownOutput: true,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = JSON.parse(readFileSync(join(outDir, "index.json"), "utf8")) as {
+      basePath: string;
+      files: Array<{ name: string; path: string; ext: string; dir: string; size: number; summary?: string }>;
+    };
+
+    expect(index.basePath).toBe("../docs");
+    expect(index.files).toEqual([
+      {
+        name: "root.md",
+        path: "root.md",
+        ext: "md",
+        dir: "",
+        size: 7,
+        summary: "Root",
+      },
+    ]);
+    expect(readFileSync(join(outDir, "index.md"), "utf8")).toContain("| [root.md](root.md) |");
   });
 });
