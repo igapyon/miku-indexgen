@@ -3,10 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { HelpRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "../src/main.js";
 
 describe("parseArgs", () => {
-  it("parses the target dir and options", () => {
-    expect(parseArgs(["./docs", "--output", "SUMMARY.json", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
-      targetDir: "./docs",
-      outputFileName: "SUMMARY.json",
+  it("parses the input directory and options", () => {
+    expect(parseArgs(["--input-directory", "./docs", "--output-directory", "./out", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
+      inputDirectory: "./docs",
+      outputDirectory: "./out",
       title: "Docs Index",
       markdownOutput: true,
       includeGeneratorMetadata: false,
@@ -21,7 +21,7 @@ describe("parseArgs", () => {
   });
 
   it("enables generator metadata by default", () => {
-    expect(parseArgs(["./docs"]).includeGeneratorMetadata).toBe(true);
+    expect(parseArgs(["--input-directory", "./docs"]).includeGeneratorMetadata).toBe(true);
   });
 });
 
@@ -49,7 +49,7 @@ describe("printHelp", () => {
       logSpy.mockRestore();
     }
 
-    expect(output).toContain("miku-indexgen <targetDir>");
+    expect(output).toContain("miku-indexgen --input-directory <dir>");
     expect(output).toContain("--no-generator");
     expect(output).toContain("--json-summary-path");
   });

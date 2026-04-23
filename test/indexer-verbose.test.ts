@@ -18,8 +18,7 @@ describe("createIndexes verbose output", () => {
 
     try {
       createIndexes({
-        targetDir: docsDir,
-        outputFileName: "index.json",
+        inputDirectory: docsDir,
         title: "Verbose Docs",
         markdownOutput: false,
         recursive: true,

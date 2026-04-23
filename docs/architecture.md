@@ -8,6 +8,8 @@ This file describes the software-specific structure and behavior.
 - Build output: `dist/main.js`
 - Module format: Node ESM
 - Primary output: root `index.json`
+- CLI input directory is specified with `--input-directory`
+- CLI output directory can be specified with `--output-directory`
 - `index.json` uses a flat `files` array as the canonical structure
 - Root metadata includes optional `generator`, optional `title`, and `basePath`
 - `generator` is included by default and can be omitted with `--no-generator`
@@ -46,5 +48,5 @@ This file describes the software-specific structure and behavior.
 ```bash
 npm install
 npm run build
-npx miku-indexgen <targetDir>
+npx miku-indexgen --input-directory <dir>
 ```

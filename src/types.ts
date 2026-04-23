@@ -1,6 +1,6 @@
 export type CliOptions = {
-  targetDir: string;
-  outputFileName: string;
+  inputDirectory: string;
+  outputDirectory?: string;
   title?: string;
   markdownOutput: boolean;
   includeGeneratorMetadata?: boolean;

@@ -17,8 +17,7 @@ describe("createIndexes output handling", () => {
     writeFileSync(join(docsDir, "index.json"), "keep me\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: false,
       recursive: true,
@@ -41,8 +40,7 @@ describe("createIndexes output handling", () => {
     writeFileSync(join(docsDir, "index.md"), "keep markdown\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: true,
       recursive: true,
@@ -68,8 +66,7 @@ describe("createIndexes output handling", () => {
     writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: true,
       recursive: true,
@@ -98,8 +95,7 @@ describe("createIndexes output handling", () => {
     writeFileSync(join(docsDir, "index.md"), "# Previous Index\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: true,
       recursive: true,
@@ -126,8 +122,7 @@ describe("createIndexes output handling", () => {
     writeFileSync(join(chapter1, "a|b.md"), "plain | text\n", "utf8");
 
     createIndexes({
-      targetDir: docsDir,
-      outputFileName: "index.json",
+      inputDirectory: docsDir,
       title: undefined,
       markdownOutput: true,
       recursive: true,

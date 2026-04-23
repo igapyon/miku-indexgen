@@ -34,8 +34,8 @@ function readRequiredOptionValue(argv: string[], index: number, optionName: stri
 }
 
 export function parseArgs(argv: string[]): CliOptions {
-  const positional: string[] = [];
-  let outputFileName = "index.json";
+  let inputDirectory: string | undefined;
+  let outputDirectory: string | undefined;
   let title: string | undefined;
   let markdownOutput = false;
   let includeGeneratorMetadata = true;
@@ -50,8 +50,14 @@ export function parseArgs(argv: string[]): CliOptions {
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
 
-    if (arg === "--output" || arg === "-o") {
-      outputFileName = readRequiredOptionValue(argv, i, "--output", "a file name");
+    if (arg === "--input-directory") {
+      inputDirectory = readRequiredOptionValue(argv, i, "--input-directory", "an input directory");
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--output-directory") {
+      outputDirectory = readRequiredOptionValue(argv, i, "--output-directory", "an output directory");
       i += 1;
       continue;
     }
@@ -119,17 +125,16 @@ export function parseArgs(argv: string[]): CliOptions {
       throw new HelpRequestedError();
     }
 
-    positional.push(arg);
+    throw new Error(`Unknown argument: ${arg}`);
   }
 
-  const targetDir = positional[0];
-  if (!targetDir) {
-    throw new Error("Please specify a target directory.");
+  if (!inputDirectory) {
+    throw new Error("Please specify an input directory with --input-directory.");
   }
 
   return {
-    targetDir,
-    outputFileName,
+    inputDirectory,
+    outputDirectory,
     title,
     markdownOutput,
     includeGeneratorMetadata,
@@ -146,11 +151,11 @@ export function parseArgs(argv: string[]): CliOptions {
 export function printHelp(): void {
   console.log(`Usage:
   npm run build
-  miku-indexgen <targetDir> [--output index.json] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
+  miku-indexgen --input-directory <dir> [--output-directory <dir>] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
 
 Description:
   Generate a root JSON index that aggregates matching files found under
-  the target directory. Markdown output is optional.
+  the input directory. Outputs are written as index.json and optional index.md.
   Supported encodings: utf8, shift_jis
 `);
 }
