@@ -15,7 +15,7 @@ npm run build
 - compile TypeScript
 - make `dist/main.js` executable
 - run `npm test`
-- generate `workspace/index.json` and `workspace/index.md` from this repository
+- generate `workplace/index.json` and `workplace/index.md` from this repository
 
 ## Test
 
@@ -32,7 +32,7 @@ node dist/main.js --input-directory <dir>
 Example:
 
 ```bash
-node dist/main.js --input-directory . --output-directory workspace --markdown
+node dist/main.js --input-directory . --output-directory workplace --markdown
 ```
 
 ## Notes
