@@ -23,7 +23,7 @@ This file describes the software-specific structure and behavior.
 - `npm run build` is a full build
 - Remove `dist/`, then run `tsc`
 - Run `npm test`
-- Generate `workspace/index.json` and `workspace/index.md` from this repository
+- Generate `workplace/index.json` and `workplace/index.md` from this repository
 
 ## Main Files
 
