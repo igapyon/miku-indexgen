@@ -17,6 +17,8 @@ slide: false
 
 そこで、ディレクトリを走査して `index.json` を生成し、必要に応じて `index.md` も生成する小さな CLI として `miku-indexgen` を作りました。
 
+![記事概要](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/55d759fc-36b0-420c-86a4-c1e9bec61547.png)
+
 ## 何を扱う記事なのか
 
 この記事では、`miku-indexgen` の最初の紹介として、次のことを扱います。
@@ -107,6 +109,8 @@ npx miku-indexgen --input-directory docs --output-directory workplace --markdown
 
 ## 出力されるもの
 
+![インデックスファイル](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/4063e737-9e40-4ad3-9762-1bf8e64ff689.png)
+
 `index.json` は、フラットな `files` 配列を正本にしています。
 
 各ファイルには、少なくとも次の情報が入ります。
@@ -161,6 +165,8 @@ npx miku-indexgen --input-directory docs --json-summary-path /title,/name
 目的は、ファイル群を読む前の全体像を、AI エージェントやプログラムが扱いやすい形にすることです。
 
 複雑な文書管理ではなく、まずファイル一覧と簡単な summary を作る。そのくらいの小さな道具ですが、生成AI とローカルファイルをつなぐ前処理としては、かなり実用的だと考えています。
+
+![まとめ](https://qiita-image-store.s3.ap-northeast-1.amazonaws.com/0/105739/d67dde2c-6857-42d1-9e1e-178cab5906d6.png)
 
 ## 実行方法とソースコード
 
