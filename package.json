@@ -37,12 +37,15 @@
   "scripts": {
     "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
     "build": "npm run clean && tsc -p tsconfig.json && node --eval \"import { chmodSync } from 'node:fs'; chmodSync('dist/main.js', 0o755);\" && npm test && node dist/main.js --input-directory . --output-directory workplace --markdown",
+    "bundle": "npm run build && node scripts/build-cli-bundle.mjs",
+    "smoke:bundle": "node scripts/smoke-cli-bundle.mjs",
     "pack:check": "npm_config_cache=workplace/.npm-cache npm pack --dry-run",
     "start": "node dist/main.js",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",
+    "esbuild": "^0.21.5",
     "typescript": "^5.9.3",
     "vitest": "^1.6.0"
   },

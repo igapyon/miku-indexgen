@@ -1,6 +1,8 @@
 .DS_Store
 node_modules/
 dist/
+bundle/
+release-assets/
 *.log
 workspace/
 workplace/*

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
 import { pathToFileURL } from "node:url";
-import { HelpRequestedError, parseArgs, printHelp } from "./cli.js";
+import { HelpRequestedError, VersionRequestedError, parseArgs, printHelp } from "./cli.js";
 import { createIndexes } from "./indexer.js";
+import { VERSION } from "./version.js";
 
 export type { CliOptions, IndexFile, RootIndex } from "./types.js";
-export { HelpRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "./cli.js";
+export { HelpRequestedError, VersionRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "./cli.js";
 export { normalizeEncodingName, parseEncodingOption, readTextFile, writeTextFile } from "./encoding.js";
 export { collectIndexableFiles, buildIndexContent, createIndexes, formatIndexJson } from "./indexer.js";
 export { extractJsonSummary, getJsonPointerValue, parseJsonSummaryPaths } from "./json-summary.js";
@@ -26,6 +27,11 @@ export function main(): void {
   } catch (error) {
     if (error instanceof HelpRequestedError) {
       printHelp();
+      process.exit(0);
+    }
+
+    if (error instanceof VersionRequestedError) {
+      console.log(`miku-indexgen ${VERSION}`);
       process.exit(0);
     }
 

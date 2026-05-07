@@ -64,6 +64,20 @@ describe("package metadata", () => {
     );
   });
 
+  it("includes local bundle build and smoke scripts for release assets", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+
+    expect(packageJson.scripts?.bundle).toBe("npm run build && node scripts/build-cli-bundle.mjs");
+    expect(packageJson.scripts?.["smoke:bundle"]).toBe("node scripts/smoke-cli-bundle.mjs");
+  });
+
+  it("keeps the CLI version constant aligned with package.json", () => {
+    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson & { version: string };
+    const versionSource = readFileSync(join("src", "version.ts"), "utf8");
+
+    expect(versionSource).toContain(`VERSION = "${packageJson.version}"`);
+  });
+
   it("keeps a node shebang on the TypeScript CLI source for the built bin", () => {
     const mainSource = readFileSync(join("src", "main.ts"), "utf8");
 

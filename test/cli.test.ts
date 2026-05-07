@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { HelpRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "../src/main.js";
+import { HelpRequestedError, VersionRequestedError, parseArgs, parseIncludeExtensions, printHelp } from "../src/main.js";
 
 describe("parseArgs", () => {
   it("parses the input directory and options", () => {
@@ -34,6 +34,12 @@ describe("parseIncludeExtensions", () => {
 describe("help handling", () => {
   it("signals help requests without exiting from the parser", () => {
     expect(() => parseArgs(["--help"])).toThrow(HelpRequestedError);
+  });
+});
+
+describe("version handling", () => {
+  it("signals version requests without requiring an input directory", () => {
+    expect(() => parseArgs(["--version"])).toThrow(VersionRequestedError);
   });
 });
 
