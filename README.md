@@ -76,6 +76,8 @@ When `--output-directory` is omitted, outputs are written under `inputDirectory`
 ## Output
 
 Generated JSON uses a flat `files` array as the canonical structure.
+The root structure uses one-space indentation for compact readability, while each `files` entry is written on one line to make `rg` / `grep` search results useful as file-level records.
+Line breaks inside string values are escaped by JSON encoding, so they do not split a file entry across multiple lines.
 
 Root-level fields:
 
@@ -209,6 +211,8 @@ npx miku-indexgen --input-directory docs --output-directory out --markdown
 ## 出力
 
 生成される JSON は、フラットな `files` 配列を正本とする構造です。
+ルート構造はコンパクトに読みやすくするため1スペースでインデントし、各 `files` 要素は `rg` / `grep` の検索結果で1ファイル単位のレコードとして扱いやすいように1行で出力します。
+文字列値に含まれる改行は JSON エンコードでエスケープされるため、1つのファイル要素が複数行に分割されることはありません。
 
 ルート要素:
 
