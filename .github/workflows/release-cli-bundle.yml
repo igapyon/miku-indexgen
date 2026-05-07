@@ -1,4 +1,4 @@
-name: Release npm package
+name: Release CLI bundle
 
 on:
   push:
@@ -19,7 +19,7 @@ env:
   RELEASE_ASSETS_DIR: release-assets
 
 jobs:
-  release-npm-package:
+  release-cli-bundle:
     runs-on: ubuntu-latest
     env:
       TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
@@ -43,7 +43,7 @@ jobs:
           case "$TAG_NAME" in
             v*) ;;
             *)
-              echo "Release package upload only supports tags starting with v: $TAG_NAME" >&2
+              echo "Release asset upload only supports tags starting with v: $TAG_NAME" >&2
               exit 1
               ;;
           esac
@@ -62,25 +62,29 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build and test
-        run: npm run build
+      - name: Build CLI bundle
+        run: npm run bundle
+
+      - name: Smoke test CLI bundle
+        run: npm run smoke:bundle
 
       - name: Prepare release assets
         run: |
           set -euo pipefail
 
           version="${TAG_NAME#v}"
-          package_tarball="$(npm pack --silent)"
 
           mkdir -p "${RELEASE_ASSETS_DIR}"
-          cp "${package_tarball}" "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${version}.tgz"
+          cp "bundle/${PRODUCT_NAME}.mjs" "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${version}.mjs"
+          cp "bundle/${PRODUCT_NAME}-sources.tgz" "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-sources-${version}.tgz"
 
-      - name: Verify release asset
+      - name: Verify release assets
         run: |
           set -euo pipefail
-          test -s "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${TAG_NAME#v}.tgz"
+          test -s "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${TAG_NAME#v}.mjs"
+          test -s "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-sources-${TAG_NAME#v}.tgz"
 
-      - name: Upload release asset
+      - name: Upload release assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}

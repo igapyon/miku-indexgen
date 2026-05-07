@@ -12,6 +12,13 @@ export class HelpRequestedError extends Error {
   }
 }
 
+export class VersionRequestedError extends Error {
+  constructor() {
+    super("Version requested.");
+    this.name = "VersionRequestedError";
+  }
+}
+
 export function parseIncludeExtensions(value: string): string[] {
   const extensions = value
     .split(",")
@@ -123,6 +130,10 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--help" || arg === "-h") {
       throw new HelpRequestedError();
+    }
+
+    if (arg === "--version" || arg === "-v") {
+      throw new VersionRequestedError();
     }
 
     throw new Error(`Unknown argument: ${arg}`);

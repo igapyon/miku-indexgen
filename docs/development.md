@@ -17,6 +17,20 @@ npm run build
 - run `npm test`
 - generate `workplace/index.json` and `workplace/index.md` from this repository
 
+## CLI Bundle
+
+```bash
+npm run bundle
+npm run smoke:bundle
+```
+
+`npm run bundle` creates generated release artifacts under `bundle/`:
+
+- `bundle/miku-indexgen.mjs`
+- `bundle/miku-indexgen-sources.tgz`
+
+`npm run smoke:bundle` verifies the single-file runtime with `--version` and `--help`.
+
 ## Test
 
 ```bash
