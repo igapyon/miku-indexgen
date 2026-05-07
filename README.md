@@ -131,6 +131,18 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 - Architecture memo: [docs/architecture.md](docs/architecture.md)
 - Software style memo: [docs/software-style.md](docs/software-style.md)
 
+## GitHub Release Assets
+
+This repository includes a GitHub Actions workflow that attaches an npm package tarball to a GitHub Release when a `v*` release tag is pushed.
+
+Expected release asset name for tag `v1.1.0`:
+
+- `miku-indexgen-1.1.0.tgz`
+
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.1.0.2`.
+
+This workflow does not run `npm publish`.
+
 ---
 
 # miku-indexgen
@@ -265,3 +277,15 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 - 開発メモ: [docs/development.md](docs/development.md)
 - アーキテクチャメモ: [docs/architecture.md](docs/architecture.md)
 - ソフトウェアスタイルメモ: [docs/software-style.md](docs/software-style.md)
+
+## GitHub Release Assets
+
+このリポジトリには、`v*` release tag が push されたときに npm package tarball を GitHub Release に添付する GitHub Actions workflow があります。
+
+tag `v1.1.0` の想定 release asset 名:
+
+- `miku-indexgen-1.1.0.tgz`
+
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.1.0.2` のような dot suffix 付きであることを確認します。
+
+この workflow は `npm publish` を実行しません。

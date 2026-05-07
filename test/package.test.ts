@@ -59,7 +59,9 @@ describe("package metadata", () => {
   it("includes a pack dry-run script for publish checks", () => {
     const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
 
-    expect(packageJson.scripts?.["pack:check"]).toBe("npm pack --dry-run");
+    expect(packageJson.scripts?.["pack:check"]).toBe(
+      "npm_config_cache=workplace/.npm-cache npm pack --dry-run",
+    );
   });
 
   it("keeps a node shebang on the TypeScript CLI source for the built bin", () => {
