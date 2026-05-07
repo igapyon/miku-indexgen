@@ -58,6 +58,13 @@
 - TypeScript declaration を `dist/*.d.ts` として出力する
 - `npm pack --dry-run` 用の確認スクリプトを追加する
 
+## 実装済み: GitHub Release asset workflow
+
+- `v*` tag push 時に GitHub Release へ npm package tarball を添付する workflow を追加する
+- `package.json` の version と release tag version の整合性を確認する
+- `v1.1.0.2` のような dot suffix 付き tag も同じ package version 系列として扱う
+- この workflow では `npm publish` は実行しない
+
 ## 実装済み: search-friendly JSON formatting
 
 - `index.json` のルート構造は1スペース単位でインデントする
