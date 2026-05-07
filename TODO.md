@@ -58,6 +58,12 @@
 - TypeScript declaration を `dist/*.d.ts` として出力する
 - `npm pack --dry-run` 用の確認スクリプトを追加する
 
+## 実装済み: search-friendly JSON formatting
+
+- `index.json` のルート構造は1スペース単位でインデントする
+- `files` 配列の各要素は `rg` / `grep` の検索結果で1ファイル単位のレコードとして読めるように1行で出力する
+- 文字列値内の改行は JSON エスケープに任せ、ファイル要素の行を分割しない
+
 ## 検討中: Node 向け公開
 
 - npm registry で公開できる CLI パッケージ形態をさらに整える

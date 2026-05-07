@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { collectIndexableFiles, createIndexes } from "../src/main.js";
+import { buildIndexContent, collectIndexableFiles, createIndexes } from "../src/main.js";
 import { createTempWorkspace } from "./test-utils.js";
 
 describe("createIndexes", () => {
@@ -85,6 +85,67 @@ describe("createIndexes", () => {
         summary: "Root",
       },
     ]);
+  });
+
+  it("formats each file entry on one line for search-friendly JSON", () => {
+    const content = buildIndexContent(
+      "Docs Index",
+      "/work/docs",
+      [
+        {
+          name: "a.md",
+          path: "chapter1/a.md",
+          ext: "md",
+          dir: "chapter1",
+          size: 4,
+          summary: "A",
+        },
+        {
+          name: "data.json",
+          path: "chapter2/data.json",
+          ext: "json",
+          dir: "chapter2",
+          size: 22,
+        },
+      ],
+      "/work/docs/index.json",
+    );
+
+    expect(content).toBe(
+      [
+        "{",
+        ' "title": "Docs Index",',
+        ' "generator": "miku-indexgen",',
+        ' "basePath": ".",',
+        ' "files": [',
+        '  {"name":"a.md","path":"chapter1/a.md","ext":"md","dir":"chapter1","size":4,"summary":"A"},',
+        '  {"name":"data.json","path":"chapter2/data.json","ext":"json","dir":"chapter2","size":22}',
+        " ]",
+        "}",
+        "",
+      ].join("\n"),
+    );
+  });
+
+  it("escapes line breaks inside file entries without splitting the record line", () => {
+    const content = buildIndexContent(
+      undefined,
+      "/work/docs",
+      [
+        {
+          name: "a.md",
+          path: "a.md",
+          ext: "md",
+          dir: "",
+          size: 12,
+          summary: "First line\nSecond line",
+        },
+      ],
+      "/work/docs/index.json",
+    );
+
+    expect(content).toContain('  {"name":"a.md","path":"a.md","ext":"md","dir":"","size":12,"summary":"First line\\nSecond line"}');
+    expect(content.split("\n")).toHaveLength(8);
   });
 
   it("collects markdown and json files", () => {
