@@ -3,7 +3,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { readTextFile, writeTextFile } from "./encoding.js";
 import { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
-import { buildMarkdownIndexContent, extractSummary } from "./markdown.js";
+import { buildMarkdownIndexContent, extractFrontMatter, extractSummaryFromBody } from "./markdown.js";
 import { extractJsonSummary } from "./json-summary.js";
 import { getFileExtension, getFileName, toPosixPath } from "./path-utils.js";
 import type { CreateIndexTimings, VerboseLogger } from "./logging.js";
@@ -80,7 +80,11 @@ function buildIndexFile(
   timings.statMs += performance.now() - statStart;
 
   const ext = getFileExtension(filePath);
-  const summary = readSummary(filePath, ext, jsonSummaryPaths, inputEncoding, timings);
+  const markdownFields = ext === "md" ? readMarkdownIndexFields(filePath, inputEncoding, timings) : {};
+  const summary =
+    ext === "md"
+      ? markdownFields.summary
+      : readJsonSummaryIfConfigured(filePath, ext, jsonSummaryPaths, inputEncoding, timings);
 
   return {
     name: getFileName(filePath),
@@ -88,21 +92,19 @@ function buildIndexFile(
     ext,
     dir: toPosixPath(relative(targetPath, dirname(filePath))),
     size,
+    ...("title" in markdownFields ? { title: markdownFields.title } : {}),
+    ...("topics" in markdownFields ? { topics: markdownFields.topics } : {}),
     summary,
   };
 }
 
-function readSummary(
+function readJsonSummaryIfConfigured(
   filePath: string,
   ext: string,
   jsonSummaryPaths: string[] | undefined,
   inputEncoding: string,
   timings: CreateIndexTimings,
 ): string | undefined {
-  if (ext === "md") {
-    return readMarkdownSummary(filePath, inputEncoding, timings);
-  }
-
   if (ext === "json" && jsonSummaryPaths && jsonSummaryPaths.length > 0) {
     return readJsonSummary(filePath, inputEncoding, jsonSummaryPaths, timings);
   }
@@ -110,15 +112,25 @@ function readSummary(
   return undefined;
 }
 
-function readMarkdownSummary(filePath: string, inputEncoding: string, timings: CreateIndexTimings): string | undefined {
+function readMarkdownIndexFields(
+  filePath: string,
+  inputEncoding: string,
+  timings: CreateIndexTimings,
+): Pick<IndexFile, "summary" | "title" | "topics"> {
   const readFileStart = performance.now();
   const content = readTextFile(filePath, inputEncoding);
   timings.readFileMs += performance.now() - readFileStart;
 
   const summaryStart = performance.now();
-  const summary = extractSummary(content);
+  const { body, metadata } = extractFrontMatter(content);
+  const summary = extractSummaryFromBody(body);
   timings.summaryMs += performance.now() - summaryStart;
-  return summary;
+
+  return {
+    ...("title" in metadata ? { title: metadata.title } : {}),
+    ...("topics" in metadata ? { topics: metadata.topics } : {}),
+    summary,
+  };
 }
 
 function readJsonSummary(

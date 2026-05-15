@@ -93,9 +93,23 @@ Each file entry includes:
 - `ext`
 - `dir`
 - `size`
+- `title` optional, extracted from Markdown front matter
+- `topics` optional, extracted from Markdown front matter
 - `summary` optional
 
-For Markdown files, `summary` is extracted from the first heading or from the leading body text.
+For Markdown files, `summary` is extracted from the first heading or from the leading body text. If the file starts with Markdown front matter, the front matter is excluded from `summary` extraction.
+
+Markdown front matter metadata is optional. `miku-indexgen` reads only simple `title` and `topics` fields:
+
+```markdown
+---
+title: Writing Guide
+topics:
+  - writing
+  - article
+  - tone
+---
+```
 
 For JSON files, `summary` is omitted by default. When `--json-summary-path` is specified, each path is treated as a JSON Pointer and the first matching string value is used.
 
@@ -135,12 +149,12 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 
 This repository includes a GitHub Actions workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.1.0`:
+Expected release asset names for tag `v1.2.0`:
 
-- `miku-indexgen-1.1.0.mjs`
-- `miku-indexgen-sources-1.1.0.tgz`
+- `miku-indexgen-1.2.0.mjs`
+- `miku-indexgen-sources-1.2.0.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.1.0.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.2.0.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit. This workflow does not run `npm publish`.
 
@@ -241,9 +255,23 @@ npx miku-indexgen --input-directory docs --output-directory out --markdown
 - `ext`
 - `dir`
 - `size`
+- `title` 任意。Markdown front matter から抽出
+- `topics` 任意。Markdown front matter から抽出
 - `summary` 任意
 
-Markdown ファイルの `summary` は、最初の見出しか先頭本文から抽出します。
+Markdown ファイルの `summary` は、最初の見出しか先頭本文から抽出します。ファイル先頭に Markdown front matter がある場合、front matter は `summary` 抽出対象から除外されます。
+
+Markdown front matter metadata は任意です。`miku-indexgen` は単純な `title` と `topics` だけを読み取ります:
+
+```markdown
+---
+title: Writing Guide
+topics:
+  - writing
+  - article
+  - tone
+---
+```
 
 JSON ファイルの `summary` はデフォルトでは省略されます。`--json-summary-path` を指定した場合は、JSON Pointer を左から順に評価し、最初に見つかった文字列値を使います。
 
@@ -283,11 +311,11 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する GitHub Actions workflow があります。
 
-tag `v1.1.0` の想定 release asset 名:
+tag `v1.2.0` の想定 release asset 名:
 
-- `miku-indexgen-1.1.0.mjs`
-- `miku-indexgen-sources-1.1.0.tgz`
+- `miku-indexgen-1.2.0.mjs`
+- `miku-indexgen-sources-1.2.0.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.1.0.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.2.0.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。この workflow は `npm publish` を実行しません。

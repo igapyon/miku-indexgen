@@ -280,6 +280,41 @@ describe("createIndexes", () => {
     expect(index.files[0]).toMatchObject({ path: "data.json", summary: "Data Title" });
   });
 
+  it("includes Markdown front matter title and topics in file entries", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+
+    mkdirSync(docsDir, { recursive: true });
+    writeFileSync(
+      join(docsDir, "writing-guide.md"),
+      "---\ntitle: Writing Guide\ntopics:\n  - writing\n  - article\n  - tone\n---\n\n# Body Title\n",
+      "utf8",
+    );
+
+    createIndexes({
+      inputDirectory: docsDir,
+      title: undefined,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+      files: Array<{ path: string; title?: string; topics?: string[]; summary?: string }>;
+    };
+
+    expect(index.files[0]).toMatchObject({
+      path: "writing-guide.md",
+      title: "Writing Guide",
+      topics: ["writing", "article", "tone"],
+      summary: "Body Title",
+    });
+  });
+
   it("writes outputs under outputDirectory when specified", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
