@@ -13,8 +13,9 @@ This file describes the software-specific structure and behavior.
 - `index.json` uses a flat `files` array as the canonical structure
 - Root metadata includes optional `generator`, optional `title`, and `basePath`
 - `generator` is included by default and can be omitted with `--no-generator`
-- Each file entry includes at least `name`, `path`, `ext`, `dir`, `size`, and optional `summary`
-- Markdown `summary` is extracted from headings or leading body text
+- Each file entry includes at least `name`, `path`, `ext`, `dir`, `size`, optional `title`, optional `topics`, and optional `summary`
+- Markdown `summary` is extracted from headings or leading body text after removing optional front matter
+- Markdown front matter metadata is optional and currently supports simple `title` and `topics` fields
 - JSON `summary` is disabled by default and can be extracted from configured JSON Pointer paths
 - `index.md` can also be generated as an optional companion output
 

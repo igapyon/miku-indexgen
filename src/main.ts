@@ -14,7 +14,9 @@ export { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTim
 export {
   buildMarkdownIndexContent,
   escapeMarkdownTableCell,
+  extractFrontMatter,
   extractSummary,
+  extractSummaryFromBody,
   sanitizeTextForIndex,
 } from "./markdown.js";
 export { getFileExtension, getFileName, toPosixPath } from "./path-utils.js";

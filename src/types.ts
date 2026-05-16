@@ -19,6 +19,8 @@ export type IndexFile = {
   ext: string;
   dir: string;
   size: number;
+  title?: string;
+  topics?: string[];
   summary?: string;
 };
 
