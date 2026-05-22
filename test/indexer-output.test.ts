@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { createIndexes } from "../src/main.js";
-import { createTempWorkspace } from "./test-utils.js";
+import { createTempWorkspace, readJsonFile } from "./test-utils.js";
 
 describe("createIndexes output handling", () => {
   it("does not overwrite an existing root index when overwrite is disabled", () => {
@@ -106,9 +106,9 @@ describe("createIndexes output handling", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       files: Array<{ path: string }>;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.files.map((file) => file.path)).toEqual(["root.md"]);
   });
@@ -136,5 +136,57 @@ describe("createIndexes output handling", () => {
     expect(readFileSync(join(docsDir, "index.md"), "utf8")).toContain(
       String.raw`| [dir\|name/a\|b.md](dir|name/a|b.md) | md | dir\|name | 13 | plain \| text |`,
     );
+  });
+
+  it("refreshes an existing index from generation metadata", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const outDir = join(workspace, "out");
+
+    mkdirSync(docsDir, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
+
+    createIndexes({
+      inputDirectory: docsDir,
+      outputDirectory: outDir,
+      title: "Docs Index",
+      markdownOutput: true,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    writeFileSync(join(docsDir, "second.md"), "# Second\n", "utf8");
+
+    createIndexes({
+      inputDirectory: "",
+      refreshIndex: join(outDir, "index.json"),
+      title: undefined,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = readJsonFile<{
+      title?: string;
+      generation?: { inputPath: string; markdownOutput: boolean; includeExtensions: string[] };
+      files: Array<{ path: string; summary?: string }>;
+    }>(join(outDir, "index.json"));
+
+    expect(index.title).toBe("Docs Index");
+    expect(index.generation).toMatchObject({
+      inputPath: "../docs",
+      markdownOutput: true,
+      includeExtensions: ["md"],
+    });
+    expect(index.files.map((file) => file.path)).toEqual(["root.md", "second.md"]);
+    expect(readFileSync(join(outDir, "index.md"), "utf8")).toContain("| [second.md](second.md) | md |  | 9 | Second |");
   });
 });

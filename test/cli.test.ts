@@ -7,6 +7,7 @@ describe("parseArgs", () => {
     expect(parseArgs(["--input-directory", "./docs", "--output-directory", "./out", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
       inputDirectory: "./docs",
       outputDirectory: "./out",
+      refreshIndex: undefined,
       title: "Docs Index",
       markdownOutput: true,
       includeGeneratorMetadata: false,
@@ -22,6 +23,14 @@ describe("parseArgs", () => {
 
   it("enables generator metadata by default", () => {
     expect(parseArgs(["--input-directory", "./docs"]).includeGeneratorMetadata).toBe(true);
+  });
+
+  it("parses refresh-index without requiring an input directory", () => {
+    expect(parseArgs(["--refresh-index", "workplace/index.json", "--verbose"])).toMatchObject({
+      inputDirectory: "",
+      refreshIndex: "workplace/index.json",
+      verbose: true,
+    });
   });
 });
 
@@ -56,6 +65,7 @@ describe("printHelp", () => {
     }
 
     expect(output).toContain("miku-indexgen --input-directory <dir>");
+    expect(output).toContain("miku-indexgen --refresh-index <index.json>");
     expect(output).toContain("--no-generator");
     expect(output).toContain("--json-summary-path");
   });

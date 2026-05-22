@@ -10,8 +10,7 @@ topics:
 
 # miku-indexgen Front Matter Specification
 
-This document records the proposed direction for expanding Markdown front
-matter support in `miku-indexgen`.
+This document records Markdown front matter support in `miku-indexgen`.
 
 The goal is to respect standard YAML authoring while keeping the generated
 `index.json` contract compact, predictable, and useful for agent workflows.
@@ -179,12 +178,12 @@ sources:
     role: primary
     checked: 2026-05-22
   - type: local-runtime
-    path: skills/igapyon-miku-indexgen/runtime/miku-indexgen-1.2.1.jar
-    version: 1.2.1
+    path: skills/igapyon-miku-indexgen/runtime/miku-indexgen-1.3.0.jar
+    version: 1.3.0
     role: verification
   - type: upstream-release
-    url: https://github.com/igapyon/miku-indexgen-java/releases/tag/v1.2.1
-    version: v1.2.1
+    url: https://github.com/igapyon/miku-indexgen-java/releases/tag/v1.3.0
+    version: v1.3.0
     role: supporting
     checked: 2026-05-22
 ```

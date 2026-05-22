@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { buildIndexContent, collectIndexableFiles, createIndexes } from "../src/main.js";
-import { createTempWorkspace } from "./test-utils.js";
+import { createTempWorkspace, readJsonFile } from "./test-utils.js";
 
 describe("createIndexes", () => {
   it("creates one root index file including files in the target directory", () => {
@@ -33,16 +33,36 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       title?: string;
       generator: string;
+      generation?: {
+        schemaVersion: number;
+        inputPath: string;
+        markdownOutput: boolean;
+        recursive: boolean;
+        includeExtensions: string[];
+        inputEncoding: string;
+        outputEncoding: string;
+        includeGeneratorMetadata: boolean;
+      };
       basePath: string;
       files: Array<{ name: string; path: string; ext: string; dir: string; size: number; summary?: string }>;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(processed).toBe(2);
     expect(index.title).toBeUndefined();
     expect(index.generator).toBe("miku-indexgen");
+    expect(index.generation).toEqual({
+      schemaVersion: 1,
+      inputPath: ".",
+      markdownOutput: false,
+      recursive: true,
+      includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+      includeGeneratorMetadata: true,
+    });
     expect(index.basePath).toBe(".");
     expect(index.files).toEqual([
       {
@@ -184,9 +204,9 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       files: Array<{ name: string; path: string; ext: string; dir: string; summary?: string; size: number }>;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.files).toEqual([
       {
@@ -219,9 +239,9 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       title?: string;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.title).toBe("Docs Index");
   });
@@ -246,9 +266,9 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       generator?: string;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.generator).toBeUndefined();
   });
@@ -273,21 +293,44 @@ describe("createIndexes", () => {
       jsonSummaryPaths: ["/title", "/metadata/title", "/description"],
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       files: Array<{ path: string; summary?: string }>;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.files[0]).toMatchObject({ path: "data.json", summary: "Data Title" });
   });
 
-  it("includes Markdown front matter title and topics in file entries", () => {
+  it("includes documented Markdown front matter metadata in file entries", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
 
     mkdirSync(docsDir, { recursive: true });
     writeFileSync(
       join(docsDir, "writing-guide.md"),
-      "---\ntitle: Writing Guide\ntopics:\n  - writing\n  - article\n  - tone\n---\n\n# Body Title\n",
+      [
+        "---",
+        "title: Writing Guide",
+        "description: >",
+        "  Practical writing conventions for indexed Markdown files.",
+        "topics:",
+        "  - writing",
+        "  - article",
+        "  - tone",
+        "category: guide",
+        "status: stable",
+        "audience: [agent, maintainer]",
+        "created: 2026-05-22",
+        "updated: 2026-05-23",
+        "sources:",
+        "  - type: human-input",
+        "    label: user-provided requirements",
+        "    role: primary",
+        "    checked: 2026-05-22",
+        "---",
+        "",
+        "# Body Title",
+        "",
+      ].join("\n"),
       "utf8",
     );
 
@@ -303,14 +346,40 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
-      files: Array<{ path: string; title?: string; topics?: string[]; summary?: string }>;
-    };
+    const index = readJsonFile<{
+      files: Array<{
+        path: string;
+        title?: string;
+        description?: string;
+        topics?: string[];
+        category?: string;
+        status?: string;
+        audience?: string[];
+        created?: string;
+        updated?: string;
+        sources?: Array<{ type: string; label?: string; role?: string; checked?: string }>;
+        summary?: string;
+      }>;
+    }>(join(docsDir, "index.json"));
 
     expect(index.files[0]).toMatchObject({
       path: "writing-guide.md",
       title: "Writing Guide",
+      description: "Practical writing conventions for indexed Markdown files.",
       topics: ["writing", "article", "tone"],
+      category: "guide",
+      status: "stable",
+      audience: ["agent", "maintainer"],
+      created: "2026-05-22",
+      updated: "2026-05-23",
+      sources: [
+        {
+          type: "human-input",
+          label: "user-provided requirements",
+          role: "primary",
+          checked: "2026-05-22",
+        },
+      ],
       summary: "Body Title",
     });
   });
@@ -336,10 +405,10 @@ describe("createIndexes", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(outDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       basePath: string;
       files: Array<{ name: string; path: string; ext: string; dir: string; size: number; summary?: string }>;
-    };
+    }>(join(outDir, "index.json"));
 
     expect(index.basePath).toBe("../docs");
     expect(index.files).toEqual([

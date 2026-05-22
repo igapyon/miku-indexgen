@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { readJsonFile } from "./test-utils.js";
 
 type PackageJson = {
   bugs?: { url?: string };
@@ -18,7 +19,7 @@ type PackageJson = {
 
 describe("package metadata", () => {
   it("exposes the built CLI entry point as the package bin", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.bin).toEqual({
       "miku-indexgen": "./dist/main.js",
@@ -26,13 +27,13 @@ describe("package metadata", () => {
   });
 
   it("keeps the package publish surface focused on runtime files", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.files).toEqual(["dist/", "README.md", "LICENSE"]);
   });
 
   it("declares publish metadata for npm consumers", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.description).toContain("CLI");
     expect(packageJson.license).toBe("Apache-2.0");
@@ -48,7 +49,7 @@ describe("package metadata", () => {
   });
 
   it("exports the built entry point and generated type declarations", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.exports).toEqual({
       ".": "./dist/main.js",
@@ -57,7 +58,7 @@ describe("package metadata", () => {
   });
 
   it("includes a pack dry-run script for publish checks", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.scripts?.["pack:check"]).toBe(
       "npm_config_cache=workplace/.npm-cache npm pack --dry-run",
@@ -65,14 +66,14 @@ describe("package metadata", () => {
   });
 
   it("includes local bundle build and smoke scripts for release assets", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson;
+    const packageJson = readJsonFile<PackageJson>("package.json");
 
     expect(packageJson.scripts?.bundle).toBe("npm run build && node scripts/build-cli-bundle.mjs");
     expect(packageJson.scripts?.["smoke:bundle"]).toBe("node scripts/smoke-cli-bundle.mjs");
   });
 
   it("keeps the CLI version constant aligned with package.json", () => {
-    const packageJson = JSON.parse(readFileSync("package.json", "utf8")) as PackageJson & { version: string };
+    const packageJson = readJsonFile<PackageJson & { version: string }>("package.json");
     const versionSource = readFileSync(join("src", "version.ts"), "utf8");
 
     expect(versionSource).toContain(`VERSION = "${packageJson.version}"`);
@@ -82,5 +83,16 @@ describe("package metadata", () => {
     const mainSource = readFileSync(join("src", "main.ts"), "utf8");
 
     expect(mainSource.startsWith("#!/usr/bin/env node\n")).toBe(true);
+  });
+
+  it("keeps the npm publish workflow scoped to trusted publishing", () => {
+    const workflow = readFileSync(join(".github", "workflows", "publish-npm.yml"), "utf8");
+
+    expect(workflow).toContain("id-token: write");
+    expect(workflow).toContain('registry-url: "https://registry.npmjs.org"');
+    expect(workflow).toContain("npm run build");
+    expect(workflow).toContain("npm run pack:check");
+    expect(workflow).toContain("npm publish --access public");
+    expect(workflow).toContain("must exactly match package.json version");
   });
 });

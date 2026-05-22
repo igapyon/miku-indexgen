@@ -40,6 +40,86 @@ describe("extractFrontMatter", () => {
     });
   });
 
+  it("extracts documented YAML metadata fields", () => {
+    expect(
+      extractFrontMatter(
+        [
+          "---",
+          "title: Runtime operations map",
+          "description: >",
+          "  CLI runtime selection, command examples, and backend policy.",
+          "topics: [miku-indexgen, runtime]",
+          "category: reference",
+          "status: stable",
+          "audience:",
+          "  - agent",
+          "  - maintainer",
+          "created: 2026-05-22",
+          "updated: 2026-05-23",
+          "sources:",
+          "  - type: human-input",
+          "    label: user-provided requirements",
+          "    role: primary",
+          "    checked: 2026-05-22",
+          "  - type: local-file",
+          "    path: docs/index-json-spec.md",
+          "    extra: ignored",
+          "---",
+          "# Body",
+          "",
+        ].join("\n"),
+      ).metadata,
+    ).toEqual({
+      title: "Runtime operations map",
+      description: "CLI runtime selection, command examples, and backend policy.",
+      topics: ["miku-indexgen", "runtime"],
+      category: "reference",
+      status: "stable",
+      audience: ["agent", "maintainer"],
+      created: "2026-05-22",
+      updated: "2026-05-23",
+      sources: [
+        {
+          type: "human-input",
+          label: "user-provided requirements",
+          role: "primary",
+          checked: "2026-05-22",
+        },
+        {
+          type: "local-file",
+          path: "docs/index-json-spec.md",
+        },
+      ],
+    });
+  });
+
+  it("ignores unknown fields and unsupported documented value shapes", () => {
+    expect(
+      extractFrontMatter(
+        [
+          "---",
+          "title:",
+          "  text: Writing Guide",
+          "topics:",
+          "  - name: writing",
+          "metadata:",
+          "  category: reference",
+          "sources:",
+          "  - label: missing type",
+          "---",
+          "# Body",
+          "",
+        ].join("\n"),
+      ).metadata,
+    ).toEqual({});
+  });
+
+  it("treats invalid YAML front matter as empty metadata while preserving body extraction", () => {
+    const result = extractFrontMatter("---\ntitle: [unterminated\n---\n# Body\n");
+    expect(result.body).toBe("# Body\n");
+    expect(result.metadata).toEqual({});
+  });
+
   it("treats unclosed front matter as body text", () => {
     const markdown = "---\ntitle: Writing Guide\n# Body\n";
     expect(extractFrontMatter(markdown)).toEqual({

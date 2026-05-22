@@ -2,12 +2,15 @@ import { Dirent, mkdirSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { readTextFile, writeTextFile } from "./encoding.js";
+import { extractFrontMatter } from "./frontmatter.js";
+import { buildGenerationMetadata, buildRefreshOptions } from "./generation.js";
+import { formatIndexJson } from "./index-json.js";
 import { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
-import { buildMarkdownIndexContent, extractFrontMatter, extractSummaryFromBody } from "./markdown.js";
+import { buildMarkdownIndexContent, extractSummaryFromBody } from "./markdown.js";
 import { extractJsonSummary } from "./json-summary.js";
 import { getFileExtension, getFileName, toPosixPath } from "./path-utils.js";
 import type { CreateIndexTimings, VerboseLogger } from "./logging.js";
-import type { CliOptions, IndexFile, RootIndex } from "./types.js";
+import type { CliOptions, GenerationMetadata, IndexFile, RootIndex } from "./types.js";
 
 const GENERATOR_NAME = "miku-indexgen";
 const JSON_OUTPUT_FILE_NAME = "index.json";
@@ -80,11 +83,10 @@ function buildIndexFile(
   timings.statMs += performance.now() - statStart;
 
   const ext = getFileExtension(filePath);
-  const markdownFields = ext === "md" ? readMarkdownIndexFields(filePath, inputEncoding, timings) : {};
-  const summary =
+  const extractedFields =
     ext === "md"
-      ? markdownFields.summary
-      : readJsonSummaryIfConfigured(filePath, ext, jsonSummaryPaths, inputEncoding, timings);
+      ? readMarkdownIndexFields(filePath, inputEncoding, timings)
+      : { summary: readJsonSummaryIfConfigured(filePath, ext, jsonSummaryPaths, inputEncoding, timings) };
 
   return {
     name: getFileName(filePath),
@@ -92,9 +94,7 @@ function buildIndexFile(
     ext,
     dir: toPosixPath(relative(targetPath, dirname(filePath))),
     size,
-    ...("title" in markdownFields ? { title: markdownFields.title } : {}),
-    ...("topics" in markdownFields ? { topics: markdownFields.topics } : {}),
-    summary,
+    ...extractedFields,
   };
 }
 
@@ -116,7 +116,10 @@ function readMarkdownIndexFields(
   filePath: string,
   inputEncoding: string,
   timings: CreateIndexTimings,
-): Pick<IndexFile, "summary" | "title" | "topics"> {
+): Pick<
+  IndexFile,
+  "summary" | "title" | "description" | "topics" | "category" | "status" | "audience" | "created" | "updated" | "sources"
+> {
   const readFileStart = performance.now();
   const content = readTextFile(filePath, inputEncoding);
   timings.readFileMs += performance.now() - readFileStart;
@@ -127,8 +130,7 @@ function readMarkdownIndexFields(
   timings.summaryMs += performance.now() - summaryStart;
 
   return {
-    ...("title" in metadata ? { title: metadata.title } : {}),
-    ...("topics" in metadata ? { topics: metadata.topics } : {}),
+    ...metadata,
     summary,
   };
 }
@@ -155,40 +157,17 @@ export function buildIndexContent(
   files: IndexFile[],
   outputPath: string,
   includeGeneratorMetadata = true,
+  generation?: GenerationMetadata,
 ): string {
   const index: RootIndex = {
     ...(title ? { title } : {}),
     ...(includeGeneratorMetadata ? { generator: GENERATOR_NAME } : {}),
+    ...(generation ? { generation } : {}),
     basePath: toPosixPath(relative(dirname(outputPath), targetPath)) || ".",
     files,
   };
 
   return formatIndexJson(index);
-}
-
-export function formatIndexJson(index: RootIndex): string {
-  const lines = ["{"];
-  const rootProperties: Array<[string, string | undefined]> = [
-    ["title", index.title],
-    ["generator", index.generator],
-    ["basePath", index.basePath],
-  ];
-
-  for (const [name, value] of rootProperties) {
-    if (value !== undefined) {
-      lines.push(` ${JSON.stringify(name)}: ${JSON.stringify(value)},`);
-    }
-  }
-
-  lines.push(' "files": [');
-  for (const [indexNumber, file] of index.files.entries()) {
-    const comma = indexNumber + 1 < index.files.length ? "," : "";
-    lines.push(`  ${JSON.stringify(file)}${comma}`);
-  }
-  lines.push(" ]");
-  lines.push("}");
-
-  return `${lines.join("\n")}\n`;
 }
 
 function collectIndexableFilesWithSet(
@@ -262,6 +241,7 @@ function writeIndexOutputs(
     files,
     outputPaths.jsonPath,
     options.includeGeneratorMetadata !== false,
+    buildGenerationMetadata(options, targetPath, outputPaths.jsonPath),
   );
   timings.jsonStringifyMs = performance.now() - jsonStringifyStart;
 
@@ -281,6 +261,10 @@ function writeIndexOutputs(
 }
 
 export function createIndexes(options: CliOptions): number {
+  if (options.refreshIndex) {
+    return refreshIndex(options);
+  }
+
   const totalStart = performance.now();
   const targetPath = resolve(options.inputDirectory);
   const outputDirectoryPath = resolve(options.outputDirectory ?? options.inputDirectory);
@@ -311,4 +295,13 @@ export function createIndexes(options: CliOptions): number {
   logVerboseTimings(files, options, timings, performance.now() - totalStart, logger);
 
   return subdirs;
+}
+
+export function refreshIndex(options: CliOptions): number {
+  if (!options.refreshIndex) {
+    throw new Error("Please specify an index.json path for --refresh-index.");
+  }
+
+  const indexPath = resolve(options.refreshIndex);
+  return createIndexes(buildRefreshOptions(options, indexPath));
 }

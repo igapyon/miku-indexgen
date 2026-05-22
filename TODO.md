@@ -71,7 +71,7 @@
 - `files` 配列の各要素は `rg` / `grep` の検索結果で1ファイル単位のレコードとして読めるように1行で出力する
 - 文字列値内の改行は JSON エスケープに任せ、ファイル要素の行を分割しない
 
-## 検討中: Markdown front matter の YAML 対応
+## 実装済み: Markdown front matter の YAML 対応
 
 - `docs/miku-indexgen-frontmatter-spec.md` に沿って、Markdown front matter を YAML として parse する
 - 現行の正規表現ベースの `title` / `topics` 抽出を、YAML parser ベースの許可フィールド抽出へ置き換える
@@ -117,9 +117,93 @@
 11. README の front matter 説明を `title` / `topics` 限定から新仕様へ更新する
 12. `npm test` と `npm run build` で確認する
 
-## 検討中: 生成AI時代向け `--help` 拡張
+## 実装済み: self-describing `index.json` と refresh index
 
-- Markdown front matter の YAML 対応を実装した後に、`miku-indexgen --help` を拡張する
+- `index.json` に再生成条件を保持する `generation` metadata を追加する
+- 既存の `index.json` を入力として読み、同じ条件で `index.json` を更新できるようにする
+- 生成AIが `index.json` の作成条件を推測せずに再生成できるようにする
+- この機能は generated artifact を手編集する運用ではなく、生成条件を CLI が読み取って再実行するための仕組みとして扱う
+
+### root metadata 方針
+
+- `basePath` と `generation.inputPath` は別フィールドとして保持する
+- `basePath` は生成された `index.json` 内の file entry を解釈するための情報
+- `generation.inputPath` は再生成のために使う入力ディレクトリ情報
+- 値が同じになりがちでも責務が違うため統合しない
+- `--no-generator` は root `generator` metadata だけに作用する
+- `generation` metadata は root `generator` とは別扱いにする
+- `--no-generator` 指定時でも、refresh に必要な `generation` は残す
+
+### `generation` に保存する候補
+
+```json
+"generation": {
+  "schemaVersion": 1,
+  "inputPath": "../docs",
+  "markdownOutput": true,
+  "recursive": true,
+  "includeExtensions": ["md", "json"],
+  "inputEncoding": "utf8",
+  "outputEncoding": "utf8",
+  "jsonSummaryPaths": ["/title", "/name"],
+  "title": "Docs Index",
+  "includeGeneratorMetadata": true
+}
+```
+
+- `inputPath` は `index.json` のあるディレクトリから入力ディレクトリへの相対パスにする
+- `markdownOutput: true` の場合は refresh 時に隣接する `index.md` も更新する
+- `title` は root `title` を再現するための生成条件として保存する
+- `includeGeneratorMetadata` は root `generator` の有無を再現するために保存する
+
+### `generation` に保存しないもの
+
+- `overwrite`
+- `verbose`
+
+理由:
+
+- `overwrite` / `--no-overwrite` は実行時の安全ポリシーであり、生成物内容を決める条件ではない
+- `verbose` はログ表示だけで生成物内容に影響しない
+
+### CLI 案
+
+```bash
+miku-indexgen --refresh-index workplace/index.json
+```
+
+動作:
+
+1. 指定された `index.json` を読む
+2. root `generation` を読む
+3. `generation.inputPath` を `index.json` の親ディレクトリ基準で解決する
+4. 同じ `index.json` を再生成する
+5. `generation.markdownOutput: true` の場合は同じ出力ディレクトリの `index.md` も再生成する
+
+### 初期実装の範囲
+
+- まずは `--refresh-index <index.json>` だけを実装する
+- refresh 時の生成条件 override は初期実装では扱わない
+- `--verbose` のような実行時ログ指定だけは併用可能にしてよい
+- `generation` が存在しない古い `index.json` は refresh 不可として、通常の `--input-directory` による再生成を案内する
+
+### 実装ステップ
+
+1. `docs/index-json-spec.md` に `generation` metadata を追加する
+2. `docs/input-files-spec.md` に refresh index の入力扱いを追記する
+3. `src/types.ts` に `GenerationMetadata` 型を追加する
+4. `buildIndexContent()` が `generation` metadata を出力できるようにする
+5. `src/cli.ts` に `--refresh-index <index.json>` を追加する
+6. `createIndexes()` と refresh 実行経路を分ける
+7. refresh 時は `generation.inputPath` と index 出力先から `CliOptions` 相当を復元する
+8. `test/indexer-core.test.ts` に `generation` 出力テストを追加する
+9. refresh 用の CLI / integration テストを追加する
+10. README と `--help` に refresh index を記載する
+11. `npm test` と `npm run build` で確認する
+
+## 実装済み: 生成AI時代向け `--help` 拡張
+
+- Markdown front matter の YAML 対応後に、`miku-indexgen --help` を拡張する
 - `--help` は詳細仕様の全文ではなく、生成AIと人間が安全に実行できる短い runtime contract として扱う
 - 未実装または planned の metadata fields は `--help` に混ぜない
 - 詳細仕様は `docs/*-spec.md` と Agent Skills 側へ委ね、`--help` には参照先だけを載せる
@@ -139,7 +223,7 @@
   - do not edit generated files by hand; rerun `miku-indexgen`
 - Markdown behavior
   - `summary` extraction from first heading or leading body text
-  - front matter is YAML after YAML support is implemented
+  - front matter is YAML
   - only documented metadata fields are copied into `index.json`
   - unknown fields and unsupported shapes are ignored
 - JSON behavior
@@ -160,8 +244,45 @@
 4. README または `docs/development.md` に `--help` は短い runtime contract であることを記録する
 5. `npm test` と `npm run build` で確認する
 
-## 検討中: Node 向け公開
+## 実装済み: Node 向け公開
 
 - npm registry で公開できる CLI パッケージ形態をさらに整える
 - npm 公開時の信頼性確保は、Java のような成果物 GPG 署名ではなく、npm の 2FA と Trusted Publishing / provenance 対応を優先する
 - GitHub Actions などの CI から Trusted Publishing で publish できる構成を検討する
+
+### 決定事項
+
+- GitHub Release asset workflow と npm publish workflow は分離する
+- npm publish workflow は `.github/workflows/publish-npm.yml` とする
+- npm publish workflow は `v*` tag push または manual dispatch で実行できる
+- npm publish では tag version と `package.json` version の完全一致を要求する
+- `v1.3.0.2` のような dot suffix tag は、GitHub Release asset の再作成には使えるが npm publish では拒否する
+- npm publish は Trusted Publishing / OpenID Connect を前提にし、長期 npm token を置かない
+- publish 前に `npm ci`, `npm run build`, `npm run pack:check` を実行する
+
+### 実装ステップ
+
+1. `.github/workflows/publish-npm.yml` を追加する
+2. npm publish tag と `package.json` version の一致チェックを入れる
+3. workflow に `id-token: write` permission を付ける
+4. README と `docs/development.md` に release asset workflow との違いを記録する
+5. workflow の最低限の契約をテストで確認する
+6. `npm test` と `npm run build` で確認する
+
+## 実装済み: 保守リファクタリング
+
+- 挙動変更なしで、責務が大きくなった実装ファイルを小さく分ける
+- 次の機能追加前に、Markdown front matter、help text、test helper、JSON formatting の境界を整理する
+
+### 対象
+
+1. `src/markdown.ts` から front matter parse / metadata sanitizer を `src/frontmatter.ts` へ切り出す
+2. `src/cli.ts` から `printHelp()` を `src/help.ts` へ切り出す
+3. `test/indexer-core.test.ts` などで繰り返している `JSON.parse(readFileSync(...))` を test helper 化する
+4. `formatIndexJson()` を `src/index-json.ts` へ切り出す
+
+### 方針
+
+- 既存の CLI と public export の互換性を保つ
+- 出力内容は変更しない
+- refactor 後に `npm test`, `npm run build`, `--refresh-index` を確認する

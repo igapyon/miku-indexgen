@@ -33,6 +33,10 @@ When `--output-directory` is omitted, generated files are written under the
 input directory. When the generated index should not modify the source
 directory, use a separate output directory.
 
+Use `--refresh-index <index.json>` when an existing generated index already
+contains `generation` metadata and should be regenerated with the same stored
+conditions.
+
 ## Directory-Wide Input Model
 
 `miku-indexgen` takes a directory as its primary input, not an explicit list of
@@ -158,7 +162,14 @@ use a specific encoding.
 For Markdown files, `miku-indexgen` can extract:
 
 - `title`: optional, from Markdown front matter
+- `description`: optional, from Markdown front matter
 - `topics`: optional, from Markdown front matter
+- `category`: optional, from Markdown front matter
+- `status`: optional, from Markdown front matter
+- `audience`: optional, from Markdown front matter
+- `created`: optional, from Markdown front matter
+- `updated`: optional, from Markdown front matter
+- `sources`: optional, from Markdown front matter
 - `summary`: optional, from the first heading or leading body text
 
 If the Markdown file starts with front matter, that front matter is excluded
@@ -178,28 +189,19 @@ Front matter should be authored as YAML. The index contract remains selective:
 `miku-indexgen` extracts only documented fields into `index.json`, and unknown
 or unsupported fields are ignored.
 
-The currently documented stable fields are `title` and `topics`:
+The documented fields include `title`, `description`, `topics`, `category`,
+`status`, `audience`, `created`, `updated`, and `sources`:
 
 ```markdown
 ---
 title: Writing Guide
+description: Short description of the document.
 topics:
   - writing
   - article
   - tone
 ---
 ```
-
-The YAML front matter direction also reserves these metadata fields for
-documented extraction:
-
-- `description`
-- `category`
-- `status`
-- `audience`
-- `created`
-- `updated`
-- `sources`
 
 Do not assume that arbitrary YAML fields become `index.json` fields. Only rely
 on fields documented by the runtime and the generated output specification.
@@ -431,6 +433,16 @@ new index.
 
 When an agent is asked to refresh them, rerun `miku-indexgen` instead of editing
 the generated files by hand.
+
+If `index.json` contains root `generation` metadata, it can be refreshed with:
+
+```bash
+miku-indexgen --refresh-index path/to/index.json
+```
+
+`--refresh-index` reads the stored generation conditions. It does not use stored
+`overwrite` or `verbose` values because those are runtime execution policies,
+not generation content.
 
 ## Agent Guidance
 

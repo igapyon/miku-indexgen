@@ -61,6 +61,7 @@ Root-level fields:
 
 - `title`: optional string, present when `--title <text>` is specified
 - `generator`: optional string, omitted when `--no-generator` is specified
+- `generation`: object containing refresh metadata
 - `basePath`: string path from the output directory to the input directory
 - `files`: array of file entries
 
@@ -70,6 +71,17 @@ Example shape:
 {
  "title": "Docs Index",
  "generator": "miku-indexgen",
+ "generation": {
+  "schemaVersion": 1,
+  "inputPath": ".",
+  "markdownOutput": true,
+  "recursive": true,
+  "includeExtensions": ["md", "json"],
+  "inputEncoding": "utf8",
+  "outputEncoding": "utf8",
+  "title": "Docs Index",
+  "includeGeneratorMetadata": true
+ },
  "basePath": ".",
  "files": [
   {"name":"README.md","path":"README.md","ext":"md","dir":"","size":1234,"summary":"..."}
@@ -80,6 +92,10 @@ Example shape:
 The current runtime writes `generator` as the string `miku-indexgen`. Future
 versions may extend this metadata, but consumers should not depend on a richer
 shape unless the runtime documents it.
+
+`generation` stores the generation options needed by `--refresh-index`. It is
+separate from `generator`; `--no-generator` omits only root `generator` metadata
+and does not remove `generation`.
 
 `basePath` is relative to the directory containing the generated `index.json`.
 When input and output are the same directory, `basePath` is `"."`. When
@@ -114,6 +130,33 @@ When generated output files are inside the scanned input tree, the output files
 themselves are excluded from `files[]`. For example, generating `docs/index.json`
 and `docs/index.md` does not add those generated files to the new `files[]`
 array.
+
+## Generation Metadata
+
+`generation` makes `index.json` self-describing enough to refresh.
+
+Fields:
+
+- `schemaVersion`: generation metadata schema version. Current value: `1`
+- `inputPath`: input directory path relative to the generated `index.json`
+  directory
+- `markdownOutput`: whether `index.md` should also be generated
+- `recursive`: whether subdirectories are scanned
+- `includeExtensions`: indexed file extensions
+- `inputEncoding`: input text encoding
+- `outputEncoding`: output text encoding
+- `jsonSummaryPaths`: optional JSON Pointer path list for JSON summaries
+- `title`: optional root title
+- `includeGeneratorMetadata`: whether root `generator` is written
+
+The following runtime-only options are intentionally not stored:
+
+- `overwrite`
+- `verbose`
+
+Use `--refresh-index <index.json>` to regenerate from `generation`. If
+`generation.markdownOutput` is `true`, the adjacent `index.md` is also
+regenerated.
 
 ## Markdown Summary Extraction
 
