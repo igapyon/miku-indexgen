@@ -144,6 +144,14 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 - Development notes: [docs/development.md](docs/development.md)
 - Architecture memo: [docs/architecture.md](docs/architecture.md)
 - Software style memo: [docs/software-style.md](docs/software-style.md)
+- miku-soft reference: [docs/miku-soft-reference.md](docs/miku-soft-reference.md)
+
+## Repository Operation Notes
+
+- `workplace/` is a local scratch area for generated indexes, package cache, cloned references, and verification artifacts.
+- Only `workplace/.gitkeep` is tracked under `workplace/`.
+- Generated build and release outputs under `dist/`, `bundle/`, and `release-assets/` are ignored by Git.
+- Shared miku-soft design references are linked from `docs/miku-soft-reference.md`; they are not copied into this repository.
 
 ## GitHub Release Assets
 
@@ -306,6 +314,14 @@ npx miku-indexgen --input-directory docs --input-encoding shift_jis --output-enc
 - 開発メモ: [docs/development.md](docs/development.md)
 - アーキテクチャメモ: [docs/architecture.md](docs/architecture.md)
 - ソフトウェアスタイルメモ: [docs/software-style.md](docs/software-style.md)
+- miku-soft 参照: [docs/miku-soft-reference.md](docs/miku-soft-reference.md)
+
+## リポジトリ運用メモ
+
+- `workplace/` は、生成した index、package cache、参照用 clone、検証用 artifact のためのローカル作業領域です。
+- `workplace/` 配下では `workplace/.gitkeep` だけを Git 管理します。
+- `dist/`, `bundle/`, `release-assets/` 配下の生成物は Git 管理しません。
+- 共有 miku-soft 設計参照は `docs/miku-soft-reference.md` からリンクし、このリポジトリにはコピーしません。
 
 ## GitHub Release Assets
 
