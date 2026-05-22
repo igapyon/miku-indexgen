@@ -1,10 +1,10 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import iconv from "iconv-lite";
 
 import { createIndexes, readTextFile } from "../src/main.js";
-import { createTempWorkspace } from "./test-utils.js";
+import { createTempWorkspace, readJsonFile } from "./test-utils.js";
 
 describe("createIndexes encoding support", () => {
   it("reads markdown files as Shift_JIS when requested", () => {
@@ -27,9 +27,9 @@ describe("createIndexes encoding support", () => {
       outputEncoding: "utf8",
     });
 
-    const index = JSON.parse(readFileSync(join(docsDir, "index.json"), "utf8")) as {
+    const index = readJsonFile<{
       files: Array<{ summary?: string }>;
-    };
+    }>(join(docsDir, "index.json"));
 
     expect(index.files[0]?.summary).toBe("日本語");
   });

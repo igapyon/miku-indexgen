@@ -1,4 +1,4 @@
-import { sanitizeTextForIndex } from "./markdown.js";
+import { sanitizeTextForIndex } from "./text-sanitize.js";
 
 const DEFAULT_MAX_SUMMARY_LENGTH = 256;
 

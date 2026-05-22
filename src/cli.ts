@@ -43,6 +43,7 @@ function readRequiredOptionValue(argv: string[], index: number, optionName: stri
 export function parseArgs(argv: string[]): CliOptions {
   let inputDirectory: string | undefined;
   let outputDirectory: string | undefined;
+  let refreshIndex: string | undefined;
   let title: string | undefined;
   let markdownOutput = false;
   let includeGeneratorMetadata = true;
@@ -65,6 +66,12 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--output-directory") {
       outputDirectory = readRequiredOptionValue(argv, i, "--output-directory", "an output directory");
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--refresh-index") {
+      refreshIndex = readRequiredOptionValue(argv, i, "--refresh-index", "an index.json path");
       i += 1;
       continue;
     }
@@ -139,13 +146,14 @@ export function parseArgs(argv: string[]): CliOptions {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!inputDirectory) {
+  if (!inputDirectory && !refreshIndex) {
     throw new Error("Please specify an input directory with --input-directory.");
   }
 
   return {
-    inputDirectory,
+    inputDirectory: inputDirectory ?? "",
     outputDirectory,
+    refreshIndex,
     title,
     markdownOutput,
     includeGeneratorMetadata,
@@ -157,16 +165,4 @@ export function parseArgs(argv: string[]): CliOptions {
     inputEncoding,
     outputEncoding,
   };
-}
-
-export function printHelp(): void {
-  console.log(`Usage:
-  npm run build
-  miku-indexgen --input-directory <dir> [--output-directory <dir>] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
-
-Description:
-  Generate a root JSON index that aggregates matching files found under
-  the input directory. Outputs are written as index.json and optional index.md.
-  Supported encodings: utf8, shift_jis
-`);
 }
