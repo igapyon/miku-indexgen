@@ -7,12 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       tag_name:
-        description: "Release tag name, such as v1.1.0"
+        description: "Release tag name, such as v1.3.0"
         required: true
         type: string
 
 permissions:
   contents: write
+  id-token: write
 
 env:
   PRODUCT_NAME: miku-indexgen
@@ -92,3 +93,61 @@ jobs:
           overwrite_files: true
           draft: false
           prerelease: false
+
+  publish-npm-package:
+    runs-on: ubuntu-latest
+    env:
+      TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Check npm publish eligibility
+        id: npm-publish
+        run: |
+          set -euo pipefail
+
+          case "$TAG_NAME" in
+            v*) ;;
+            *)
+              echo "npm publish only supports tags starting with v: $TAG_NAME" >&2
+              exit 1
+              ;;
+          esac
+
+          package_version="$(node -p "require('./package.json').version")"
+          tag_version="${TAG_NAME#v}"
+
+          if [ "$tag_version" = "$package_version" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
+            echo "npm package version ${package_version} will be published."
+          else
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            echo "npm publish skipped: tag version (${tag_version}) does not exactly match package.json version (${package_version})."
+          fi
+
+      - name: Install dependencies
+        if: steps.npm-publish.outputs.should_publish == 'true'
+        run: npm ci
+
+      - name: Build and test
+        if: steps.npm-publish.outputs.should_publish == 'true'
+        run: npm run build
+
+      - name: Check npm package contents
+        if: steps.npm-publish.outputs.should_publish == 'true'
+        run: npm run pack:check
+
+      - name: Publish to npm
+        if: steps.npm-publish.outputs.should_publish == 'true'
+        run: npm publish --access public

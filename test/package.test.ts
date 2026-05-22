@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { readJsonFile } from "./test-utils.js";
@@ -85,14 +85,16 @@ describe("package metadata", () => {
     expect(mainSource.startsWith("#!/usr/bin/env node\n")).toBe(true);
   });
 
-  it("keeps the npm publish workflow scoped to trusted publishing", () => {
-    const workflow = readFileSync(join(".github", "workflows", "publish-npm.yml"), "utf8");
+  it("keeps release assets and npm publish in the canonical release workflow", () => {
+    const workflow = readFileSync(join(".github", "workflows", "release-cli-bundle.yml"), "utf8");
 
+    expect(existsSync(join(".github", "workflows", "publish-npm.yml"))).toBe(false);
+    expect(workflow).toContain("publish-npm-package:");
     expect(workflow).toContain("id-token: write");
     expect(workflow).toContain('registry-url: "https://registry.npmjs.org"');
     expect(workflow).toContain("npm run build");
     expect(workflow).toContain("npm run pack:check");
     expect(workflow).toContain("npm publish --access public");
-    expect(workflow).toContain("must exactly match package.json version");
+    expect(workflow).toContain("should_publish=false");
   });
 });

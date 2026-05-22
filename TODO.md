@@ -252,22 +252,23 @@ miku-indexgen --refresh-index workplace/index.json
 
 ### 決定事項
 
-- GitHub Release asset workflow と npm publish workflow は分離する
-- npm publish workflow は `.github/workflows/publish-npm.yml` とする
-- npm publish workflow は `v*` tag push または manual dispatch で実行できる
-- npm publish では tag version と `package.json` version の完全一致を要求する
-- `v1.3.0.2` のような dot suffix tag は、GitHub Release asset の再作成には使えるが npm publish では拒否する
+- `release-cli-bundle.yml` を release / publish automation の正本とする
+- GitHub Release asset job と npm publish job は同じ workflow run にまとめる
+- release asset job は `v1.3.0.2` のような dot suffix tag でも実行できる
+- npm publish job は tag version と `package.json` version が完全一致するときだけ publish する
+- dot suffix tag では npm publish を skip する
 - npm publish は Trusted Publishing / OpenID Connect を前提にし、長期 npm token を置かない
 - publish 前に `npm ci`, `npm run build`, `npm run pack:check` を実行する
 
 ### 実装ステップ
 
-1. `.github/workflows/publish-npm.yml` を追加する
-2. npm publish tag と `package.json` version の一致チェックを入れる
-3. workflow に `id-token: write` permission を付ける
-4. README と `docs/development.md` に release asset workflow との違いを記録する
-5. workflow の最低限の契約をテストで確認する
-6. `npm test` と `npm run build` で確認する
+1. `.github/workflows/release-cli-bundle.yml` に npm publish job を統合する
+2. workflow に `id-token: write` permission を付ける
+3. npm publish tag と `package.json` version の完全一致チェックを入れる
+4. dot suffix tag では npm publish を skip する
+5. README と `docs/development.md` に一本化した workflow であることを記録する
+6. workflow の最低限の契約をテストで確認する
+7. `npm test` と `npm run build` で確認する
 
 ## 実装済み: 保守リファクタリング
 

@@ -171,7 +171,7 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 ## GitHub Release Assets
 
-This repository includes a GitHub Actions workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
+This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
 Expected release asset names for tag `v1.3.0`:
 
@@ -180,21 +180,21 @@ Expected release asset names for tag `v1.3.0`:
 
 The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.3.0.2`.
 
-The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit. This workflow does not run `npm publish`.
+The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
 ## npm Publishing
 
-This repository also includes a separate GitHub Actions workflow for publishing the package to npm.
+The same release workflow also contains the npm publishing job.
 
 The npm workflow is intended for npm Trusted Publishing:
 
 - trigger: `v*` tag push or manual workflow dispatch
 - tag rule: the tag version must exactly match `package.json` version, such as `v1.3.0`
-- rejected for npm: dot-suffix release tags such as `v1.3.0.2`
+- skipped for npm: dot-suffix release tags such as `v1.3.0.2`
 - authentication: npm Trusted Publishing / OpenID Connect, not a long-lived npm token
 - checks before publish: `npm ci`, `npm run build`, and `npm run pack:check`
 
-Use the GitHub Release asset workflow for dot-suffix release asset rebuilds. Use the npm publishing workflow only when publishing a new npm package version.
+Use exact package-version tags such as `v1.3.0` for a release asset upload plus npm publish. Use dot-suffix tags such as `v1.3.0.2` for release asset rebuilds only.
 
 ---
 
@@ -371,7 +371,7 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 ## GitHub Release Assets
 
-このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する GitHub Actions workflow があります。
+このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
 tag `v1.3.0` の想定 release asset 名:
 
@@ -380,18 +380,18 @@ tag `v1.3.0` の想定 release asset 名:
 
 release workflow は、tag version が `package.json` の version と一致すること、または `v1.3.0.2` のような dot suffix 付きであることを確認します。
 
-`.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。この workflow は `npm publish` を実行しません。
+`.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。
 
 ## npm 公開
 
-このリポジトリには、npm package を公開するための別の GitHub Actions workflow もあります。
+同じ release workflow の中に npm package を公開する job もあります。
 
 npm workflow は npm Trusted Publishing 向けです。
 
 - trigger: `v*` tag push または手動 workflow dispatch
 - tag rule: tag version は `package.json` version と完全一致する必要があります。例: `v1.3.0`
-- npm では拒否: `v1.3.0.2` のような dot suffix 付き release tag
+- npm では skip: `v1.3.0.2` のような dot suffix 付き release tag
 - 認証: 長期 npm token ではなく npm Trusted Publishing / OpenID Connect
 - publish 前の確認: `npm ci`, `npm run build`, `npm run pack:check`
 
-dot suffix 付きの release asset 再作成には GitHub Release asset workflow を使います。npm publishing workflow は、新しい npm package version を公開するときだけ使います。
+`v1.3.0` のような package version と完全一致する tag では release asset upload と npm publish の両方を実行します。`v1.3.0.2` のような dot suffix tag は release asset 再作成だけに使います。
