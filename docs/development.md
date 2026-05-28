@@ -39,7 +39,7 @@ Release asset workflow:
 
 - file: `.github/workflows/release-cli-bundle.yml`
 - trigger: `v*` tag push
-- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.4.0.2`
+- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.4.1.2`
 - attaches the single-file CLI bundle and source archive to the GitHub Release
 - contains a separate npm publish job in the same workflow run
 - publishes to npm only when the tag version exactly matches `package.json` version
