@@ -1,11 +1,72 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { createIndexes } from "../src/main.js";
 import { createTempWorkspace, readJsonFile } from "./test-utils.js";
 
 describe("createIndexes output handling", () => {
+  it("reports add, none, and update statuses when outputs are rewritten", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+    const chapter1 = join(docsDir, "chapter1");
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+    let logs: string[] = [];
+
+    mkdirSync(chapter1, { recursive: true });
+    writeFileSync(join(docsDir, "root.md"), "# Root\n", "utf8");
+    writeFileSync(join(chapter1, "a.md"), "# A\n", "utf8");
+
+    try {
+      createIndexes({
+        inputDirectory: docsDir,
+        title: undefined,
+        markdownOutput: true,
+        recursive: true,
+        overwrite: true,
+        verbose: false,
+        includeExtensions: ["md", "json"],
+        inputEncoding: "utf8",
+        outputEncoding: "utf8",
+      });
+      logs = logSpy.mock.calls.map((call) => call.join(" "));
+      expect(logs).toEqual([`add   : ${join(docsDir, "index.json")}`, `add   : ${join(docsDir, "index.md")}`]);
+
+      logSpy.mockClear();
+      createIndexes({
+        inputDirectory: docsDir,
+        title: undefined,
+        markdownOutput: true,
+        recursive: true,
+        overwrite: true,
+        verbose: false,
+        includeExtensions: ["md", "json"],
+        inputEncoding: "utf8",
+        outputEncoding: "utf8",
+      });
+      logs = logSpy.mock.calls.map((call) => call.join(" "));
+      expect(logs).toEqual([`none  : ${join(docsDir, "index.json")}`, `none  : ${join(docsDir, "index.md")}`]);
+
+      writeFileSync(join(chapter1, "a.md"), "# A updated\n", "utf8");
+      logSpy.mockClear();
+      createIndexes({
+        inputDirectory: docsDir,
+        title: undefined,
+        markdownOutput: true,
+        recursive: true,
+        overwrite: true,
+        verbose: false,
+        includeExtensions: ["md", "json"],
+        inputEncoding: "utf8",
+        outputEncoding: "utf8",
+      });
+      logs = logSpy.mock.calls.map((call) => call.join(" "));
+      expect(logs).toEqual([`update: ${join(docsDir, "index.json")}`, `update: ${join(docsDir, "index.md")}`]);
+    } finally {
+      logSpy.mockRestore();
+    }
+  });
+
   it("does not overwrite an existing root index when overwrite is disabled", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");

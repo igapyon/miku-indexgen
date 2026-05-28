@@ -164,6 +164,7 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 ## Repository Operation Notes
 
+- If you are using Codex for miku-soft-related maintenance in this repository, consider explicitly activating `igapyon-miku-soft-developer`.
 - `workplace/` is a local scratch area for generated indexes, package cache, cloned references, and verification artifacts.
 - Only `workplace/.gitkeep` is tracked under `workplace/`.
 - Generated build and release outputs under `dist/`, `bundle/`, and `release-assets/` are ignored by Git.
@@ -173,12 +174,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.3.0`:
+Expected release asset names for tag `v1.4.0`:
 
-- `miku-indexgen-1.3.0.mjs`
-- `miku-indexgen-sources-1.3.0.tgz`
+- `miku-indexgen-1.4.0.mjs`
+- `miku-indexgen-sources-1.4.0.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.3.0.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.4.0.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -189,12 +190,12 @@ The same release workflow also contains the npm publishing job.
 The npm workflow is intended for npm Trusted Publishing:
 
 - trigger: `v*` tag push or manual workflow dispatch
-- tag rule: the tag version must exactly match `package.json` version, such as `v1.3.0`
-- skipped for npm: dot-suffix release tags such as `v1.3.0.2`
+- tag rule: the tag version must exactly match `package.json` version, such as `v1.4.0`
+- skipped for npm: dot-suffix release tags such as `v1.4.0.2`
 - authentication: npm Trusted Publishing / OpenID Connect, not a long-lived npm token
 - checks before publish: `npm ci`, `npm run build`, and `npm run pack:check`
 
-Use exact package-version tags such as `v1.3.0` for a release asset upload plus npm publish. Use dot-suffix tags such as `v1.3.0.2` for release asset rebuilds only.
+Use exact package-version tags such as `v1.4.0` for a release asset upload plus npm publish. Use dot-suffix tags such as `v1.4.0.2` for release asset rebuilds only.
 
 ---
 
@@ -364,6 +365,7 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 ## リポジトリ運用メモ
 
+- Codex でこのリポジトリの miku-soft 関連メンテナンスを行う場合は、必要に応じて `igapyon-miku-soft-developer` を明示的に有効化することを検討してください。
 - `workplace/` は、生成した index、package cache、参照用 clone、検証用 artifact のためのローカル作業領域です。
 - `workplace/` 配下では `workplace/.gitkeep` だけを Git 管理します。
 - `dist/`, `bundle/`, `release-assets/` 配下の生成物は Git 管理しません。
@@ -373,12 +375,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.3.0` の想定 release asset 名:
+tag `v1.4.0` の想定 release asset 名:
 
-- `miku-indexgen-1.3.0.mjs`
-- `miku-indexgen-sources-1.3.0.tgz`
+- `miku-indexgen-1.4.0.mjs`
+- `miku-indexgen-sources-1.4.0.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.3.0.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.4.0.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。
 
@@ -389,9 +391,9 @@ release workflow は、tag version が `package.json` の version と一致す�
 npm workflow は npm Trusted Publishing 向けです。
 
 - trigger: `v*` tag push または手動 workflow dispatch
-- tag rule: tag version は `package.json` version と完全一致する必要があります。例: `v1.3.0`
-- npm では skip: `v1.3.0.2` のような dot suffix 付き release tag
+- tag rule: tag version は `package.json` version と完全一致する必要があります。例: `v1.4.0`
+- npm では skip: `v1.4.0.2` のような dot suffix 付き release tag
 - 認証: 長期 npm token ではなく npm Trusted Publishing / OpenID Connect
 - publish 前の確認: `npm ci`, `npm run build`, `npm run pack:check`
 
-`v1.3.0` のような package version と完全一致する tag では release asset upload と npm publish の両方を実行します。`v1.3.0.2` のような dot suffix tag は release asset 再作成だけに使います。
+`v1.4.0` のような package version と完全一致する tag では release asset upload と npm publish の両方を実行します。`v1.4.0.2` のような dot suffix tag は release asset 再作成だけに使います。
