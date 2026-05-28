@@ -20,6 +20,8 @@ Generated output:
   index.json contains title, generator, generation, basePath, and files[].
   files[] entries include name, path, ext, dir, size, optional Markdown
   metadata, and optional summary.
+  When outputs are written, the CLI reports aligned add   :, update:, or none  :
+  labels for each file.
 
 Markdown:
   - summary is extracted from the first heading or leading body text

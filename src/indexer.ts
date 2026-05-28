@@ -21,6 +21,12 @@ type OutputPaths = {
   markdownPath?: string;
 };
 
+type OutputWriteStatus = "add" | "update" | "none";
+
+function formatOutputStatus(status: OutputWriteStatus): string {
+  return status.padEnd(6, " ");
+}
+
 function listVisibleEntries(dirPath: string): Dirent[] {
   return readdirSync(dirPath, { withFileTypes: true })
     .filter((entry: Dirent) => !entry.name.startsWith("."))
@@ -59,6 +65,22 @@ function countImmediateSubdirectories(targetPath: string): number {
 
 function shouldSkipExistingOutput(outputPath: string): boolean {
   return statSync(outputPath, { throwIfNoEntry: false })?.isFile() === true;
+}
+
+function writeTextFileWithStatus(filePath: string, content: string, encoding: string): OutputWriteStatus {
+  const existingFile = statSync(filePath, { throwIfNoEntry: false });
+  if (existingFile?.isFile() !== true) {
+    writeTextFile(filePath, content, encoding);
+    return "add";
+  }
+
+  const existingContent = readTextFile(filePath, encoding);
+  if (existingContent === content) {
+    return "none";
+  }
+
+  writeTextFile(filePath, content, encoding);
+  return "update";
 }
 
 function findExistingOutputPath(outputPaths: OutputPaths, overwriteEnabled: boolean): string | undefined {
@@ -246,18 +268,19 @@ function writeIndexOutputs(
   timings.jsonStringifyMs = performance.now() - jsonStringifyStart;
 
   const jsonWriteStart = performance.now();
-  writeTextFile(outputPaths.jsonPath, jsonContent, options.outputEncoding);
+  const jsonStatus = writeTextFileWithStatus(outputPaths.jsonPath, jsonContent, options.outputEncoding);
   timings.jsonWriteMs = performance.now() - jsonWriteStart;
-  console.log(`generated: ${outputPaths.jsonPath}`);
+  console.log(`${formatOutputStatus(jsonStatus)}: ${outputPaths.jsonPath}`);
 
   if (!outputPaths.markdownPath) {
     return;
   }
 
   const markdownStart = performance.now();
-  writeTextFile(outputPaths.markdownPath, buildMarkdownIndexContent(files), options.outputEncoding);
+  const markdownContent = buildMarkdownIndexContent(files);
+  const markdownStatus = writeTextFileWithStatus(outputPaths.markdownPath, markdownContent, options.outputEncoding);
   timings.markdownMs = performance.now() - markdownStart;
-  console.log(`generated: ${outputPaths.markdownPath}`);
+  console.log(`${formatOutputStatus(markdownStatus)}: ${outputPaths.markdownPath}`);
 }
 
 export function createIndexes(options: CliOptions): number {

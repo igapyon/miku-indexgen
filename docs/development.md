@@ -39,7 +39,7 @@ Release asset workflow:
 
 - file: `.github/workflows/release-cli-bundle.yml`
 - trigger: `v*` tag push
-- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.3.0.2`
+- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.4.0.2`
 - attaches the single-file CLI bundle and source archive to the GitHub Release
 - contains a separate npm publish job in the same workflow run
 - publishes to npm only when the tag version exactly matches `package.json` version
@@ -83,4 +83,5 @@ artifacts, metadata boundaries, options, examples, and detailed spec references.
 - `outputDirectory` is optional
 - When `outputDirectory` is omitted, outputs are written under `inputDirectory`
 - Generated `index.json` contains `generation` metadata for `--refresh-index`
+- When outputs are rewritten, the CLI reports aligned `add   :`, `update:`, or `none  :` labels for each file; `none  :` means the content was unchanged and the file was left as-is
 - See `docs/architecture.md` for source layout and internal structure
