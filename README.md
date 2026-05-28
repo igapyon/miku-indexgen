@@ -174,12 +174,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.4.3`:
+Expected release asset names for tag `v1.4.4`:
 
-- `miku-indexgen-1.4.3.mjs`
-- `miku-indexgen-sources-1.4.3.tgz`
+- `miku-indexgen-1.4.4.mjs`
+- `miku-indexgen-sources-1.4.4.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.4.3.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.4.4.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -361,11 +361,11 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.4.3` の想定 release asset 名:
+tag `v1.4.4` の想定 release asset 名:
 
-- `miku-indexgen-1.4.3.mjs`
-- `miku-indexgen-sources-1.4.3.tgz`
+- `miku-indexgen-1.4.4.mjs`
+- `miku-indexgen-sources-1.4.4.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.4.3.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.4.4.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。

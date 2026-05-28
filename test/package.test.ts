@@ -85,16 +85,18 @@ describe("package metadata", () => {
     expect(mainSource.startsWith("#!/usr/bin/env node\n")).toBe(true);
   });
 
-  it("keeps release assets and npm publish in the canonical release workflow", () => {
+  it("keeps the canonical release workflow focused on GitHub Release assets", () => {
     const workflow = readFileSync(join(".github", "workflows", "release-cli-bundle.yml"), "utf8");
 
     expect(existsSync(join(".github", "workflows", "publish-npm.yml"))).toBe(false);
-    expect(workflow).toContain("publish-npm-package:");
-    expect(workflow).toContain("id-token: write");
-    expect(workflow).toContain('registry-url: "https://registry.npmjs.org"');
-    expect(workflow).toContain("npm run build");
-    expect(workflow).toContain("npm run pack:check");
-    expect(workflow).toContain("npm publish --access public");
-    expect(workflow).toContain("should_publish=false");
+    expect(workflow).toContain("release-cli-bundle:");
+    expect(workflow).toContain("Build CLI bundle");
+    expect(workflow).toContain("Smoke test CLI bundle");
+    expect(workflow).toContain("Upload release assets");
+    expect(workflow).toContain("softprops/action-gh-release@v2");
+    expect(workflow).not.toContain("publish-npm-package:");
+    expect(workflow).not.toContain("id-token: write");
+    expect(workflow).not.toContain('registry-url: "https://registry.npmjs.org"');
+    expect(workflow).not.toContain("npm publish");
   });
 });
