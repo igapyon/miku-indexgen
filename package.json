@@ -1,6 +1,6 @@
 {
   "name": "miku-indexgen",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "description": "Minimal Node.js CLI to generate flat JSON and Markdown file indexes for AI agents and scripts.",
   "license": "Apache-2.0",
   "type": "module",
