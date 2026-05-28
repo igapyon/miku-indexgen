@@ -33,19 +33,15 @@ npm run smoke:bundle
 
 ## Publishing
 
-GitHub Release assets and npm publishing are handled by one release workflow.
+This repository does not register or publish `miku-indexgen` to the npm registry.
+The release workflow is only for GitHub Release assets.
 
 Release asset workflow:
 
 - file: `.github/workflows/release-cli-bundle.yml`
 - trigger: `v*` tag push
-- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.4.1.2`
+- accepts exact package version tags and dot-suffix rebuild tags, such as `v1.4.2.2`
 - attaches the single-file CLI bundle and source archive to the GitHub Release
-- contains a separate npm publish job in the same workflow run
-- publishes to npm only when the tag version exactly matches `package.json` version
-- skips npm publish for dot-suffix rebuild tags because npm package versions cannot be republished
-- uses npm Trusted Publishing / OpenID Connect instead of a long-lived npm token
-- runs `npm ci`, `npm run build`, `npm run pack:check`, then `npm publish --access public` before publishing
 
 ## Test
 
