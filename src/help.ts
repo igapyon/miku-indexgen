@@ -20,13 +20,19 @@ Generated output:
   index.json contains title, generator, generation, basePath, and files[].
   files[] entries include name, path, ext, dir, size, optional Markdown
   metadata, and optional summary.
+  files[] is sorted by normalized relative path using UTF-16 code unit order.
   When outputs are written, the CLI reports aligned add   :, update:, or none  :
   labels for each file.
 
 Markdown:
   - summary is extracted from the first heading or leading body text
   - front matter is parsed as YAML
-  - only documented metadata fields are copied into index.json
+  - supported fields: title, description, topics, category, status, audience,
+    created, updated, sources
+  - title, description, and topics are primary scan-time file selection signals
+  - category, status, and audience help route which files to read next
+  - sources, created, and updated help judge provenance and freshness
+  - description is capped at 256 UTF-16 code units and may end with "..."
   - unknown fields and unsupported shapes are ignored
 
 JSON:

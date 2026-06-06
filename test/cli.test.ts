@@ -68,5 +68,10 @@ describe("printHelp", () => {
     expect(output).toContain("miku-indexgen --refresh-index <index.json>");
     expect(output).toContain("--no-generator");
     expect(output).toContain("--json-summary-path");
+    expect(output).toContain("files[] is sorted by normalized relative path using UTF-16 code unit order.");
+    expect(output).toContain(
+      "supported fields: title, description, topics, category, status, audience,"
+    );
+    expect(output).toContain("title, description, and topics are primary scan-time file selection signals");
   });
 });

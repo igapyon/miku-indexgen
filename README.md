@@ -106,9 +106,15 @@ Each file entry includes:
 - `sources` optional, extracted from Markdown front matter
 - `summary` optional
 
+`files[]` entries are sorted by normalized relative path using UTF-16 code unit order.
+
 For Markdown files, `summary` is extracted from the first heading or from the leading body text. If the file starts with Markdown front matter, the front matter is excluded from `summary` extraction.
 
 Markdown front matter metadata is optional. Front matter is parsed as YAML, and only documented metadata fields are copied into `index.json`. Unknown fields and unsupported value shapes are ignored.
+Supported fields are `title`, `description`, `topics`, `category`, `status`, `audience`, `created`, `updated`, and `sources`.
+`title`, `description`, and `topics` are primary scan-time file selection signals.
+`category`, `status`, and `audience` help route which files to read next.
+`sources`, `created`, and `updated` help judge provenance and freshness.
 Long `description` values are shortened to 256 UTF-16 code units, including the trailing `...`.
 
 ```markdown
@@ -175,12 +181,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.5.0`:
+Expected release asset names for tag `v1.5.1`:
 
-- `miku-indexgen-1.5.0.mjs`
-- `miku-indexgen-sources-1.5.0.tgz`
+- `miku-indexgen-1.5.1.mjs`
+- `miku-indexgen-sources-1.5.1.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.5.0.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.5.1.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -294,9 +300,15 @@ npx miku-indexgen --input-directory docs --output-directory out --markdown
 - `sources` 任意。Markdown front matter から抽出
 - `summary` 任意
 
+`files[]` 要素は、正規化された相対パスの UTF-16 code unit order でソートされます。
+
 Markdown ファイルの `summary` は、最初の見出しか先頭本文から抽出します。ファイル先頭に Markdown front matter がある場合、front matter は `summary` 抽出対象から除外されます。
 
 Markdown front matter metadata は任意です。front matter は YAML として parse され、documented metadata fields だけが `index.json` にコピーされます。unknown fields と unsupported value shapes は無視されます。
+対応フィールドは `title`, `description`, `topics`, `category`, `status`, `audience`, `created`, `updated`, `sources` です。
+`title`, `description`, `topics` は scan-time file selection の主信号です。
+`category`, `status`, `audience` は次に読むファイルの routing を補助します。
+`sources`, `created`, `updated` は provenance と freshness の判断を補助します。
 長い `description` は、末尾の `...` を含めて 256 UTF-16 code units までに短縮されます。
 
 ```markdown
@@ -363,11 +375,11 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.5.0` の想定 release asset 名:
+tag `v1.5.1` の想定 release asset 名:
 
-- `miku-indexgen-1.5.0.mjs`
-- `miku-indexgen-sources-1.5.0.tgz`
+- `miku-indexgen-1.5.1.mjs`
+- `miku-indexgen-sources-1.5.1.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.5.0.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.5.1.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。
