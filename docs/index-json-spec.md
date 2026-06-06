@@ -126,10 +126,18 @@ Common fields:
 
 Optional fields are omitted when the runtime does not extract a value.
 
+Long Markdown front matter `description` values are shortened to 256 UTF-16
+code units, including the trailing `...`. This keeps generated `index.json`
+compact when source documents contain large descriptive metadata.
+
 When generated output files are inside the scanned input tree, the output files
 themselves are excluded from `files[]`. For example, generating `docs/index.json`
 and `docs/index.md` does not add those generated files to the new `files[]`
 array.
+
+`files[]` entries are ordered by their POSIX-style relative `path` strings using
+UTF-16 code unit order. This avoids locale-dependent collation and keeps output
+ordering aligned across Node.js, browser JavaScript, and Java runtimes.
 
 ## Generation Metadata
 

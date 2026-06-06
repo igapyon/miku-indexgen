@@ -326,6 +326,8 @@ Notes:
 - arbitrary nested objects should not be treated as supported index metadata
 - empty values are ignored
 - string values are sanitized before they are written to generated index output
+- long `description` values are shortened to 256 UTF-16 code units, including
+  the trailing `...`
 - single or double quotes around scalar values are handled by YAML parsing
 
 For the detailed YAML front matter metadata policy, see

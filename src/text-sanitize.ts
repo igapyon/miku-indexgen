@@ -7,3 +7,15 @@ export function sanitizeTextForIndex(text: string): string {
     .replace(/\s+/g, " ")
     .trim();
 }
+
+export function truncateTextForIndex(text: string, maxLength = 256, omission = "..."): string {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  if (maxLength <= omission.length) {
+    return omission.slice(0, maxLength);
+  }
+
+  return `${text.slice(0, maxLength - omission.length)}${omission}`;
+}

@@ -1,5 +1,5 @@
 import { parse } from "yaml";
-import { sanitizeTextForIndex } from "./text-sanitize.js";
+import { sanitizeTextForIndex, truncateTextForIndex } from "./text-sanitize.js";
 import type { IndexSource } from "./types.js";
 
 export type MarkdownFrontMatter = {
@@ -20,6 +20,7 @@ export type MarkdownFrontMatterResult = {
 };
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const DESCRIPTION_MAX_LENGTH = 256;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -36,6 +37,11 @@ function sanitizeMetadataString(value: unknown): string | undefined {
   }
 
   return undefined;
+}
+
+function sanitizeDescription(value: unknown): string | undefined {
+  const sanitized = sanitizeMetadataString(value);
+  return sanitized ? truncateTextForIndex(sanitized, DESCRIPTION_MAX_LENGTH) : undefined;
 }
 
 function sanitizeDateOnly(value: unknown): string | undefined {
@@ -108,7 +114,7 @@ function parseFrontMatterMetadata(frontMatter: string): MarkdownFrontMatter {
   }
 
   const title = sanitizeMetadataString(parsed.title);
-  const description = sanitizeMetadataString(parsed.description);
+  const description = sanitizeDescription(parsed.description);
   const topics = sanitizeStringArray(parsed.topics);
   const category = sanitizeMetadataString(parsed.category);
   const status = sanitizeMetadataString(parsed.status);

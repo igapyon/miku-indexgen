@@ -66,6 +66,9 @@ description: >
   CLI runtime selection, command examples, and backend policy for miku-indexgen.
 ```
 
+Long `description` values are shortened to 256 UTF-16 code units in generated
+`index.json`, including the trailing `...`.
+
 ## Core Metadata Fields
 
 The core metadata fields should be enough for agents to decide which files are
@@ -178,12 +181,12 @@ sources:
     role: primary
     checked: 2026-05-22
   - type: local-runtime
-    path: skills/igapyon-miku-indexgen/runtime/miku-indexgen-1.4.4.jar
-    version: 1.4.4
+    path: skills/igapyon-miku-indexgen/runtime/miku-indexgen-1.5.0.jar
+    version: 1.5.0
     role: verification
   - type: upstream-release
-    url: https://github.com/igapyon/miku-indexgen-java/releases/tag/v1.4.4
-    version: v1.4.4
+    url: https://github.com/igapyon/miku-indexgen-java/releases/tag/v1.5.0
+    version: v1.5.0
     role: supporting
     checked: 2026-05-22
 ```
