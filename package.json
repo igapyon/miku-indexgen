@@ -1,17 +1,56 @@
 {
-  "name": "miku-md-indexgen",
-  "version": "0.1.0",
-  "private": true,
+  "name": "miku-indexgen",
+  "version": "1.4.4",
+  "description": "Minimal Node.js CLI to generate flat JSON and Markdown file indexes for AI agents and scripts.",
+  "license": "Apache-2.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/igapyon/miku-indexgen.git"
+  },
+  "homepage": "https://github.com/igapyon/miku-indexgen#readme",
+  "bugs": {
+    "url": "https://github.com/igapyon/miku-indexgen/issues"
+  },
+  "keywords": [
+    "cli",
+    "index",
+    "markdown",
+    "json",
+    "ai"
+  ],
+  "bin": {
+    "miku-indexgen": "./dist/main.js"
+  },
+  "exports": {
+    ".": "./dist/main.js"
+  },
+  "types": "./dist/main.d.ts",
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18.19.1"
+  },
   "scripts": {
     "clean": "node --eval \"import { rmSync } from 'node:fs'; rmSync('dist', { recursive: true, force: true });\"",
-    "build": "npm run clean && tsc -p tsconfig.json && npm test && node dist/main.js . --output workspace/index.json --markdown",
+    "build": "npm run clean && tsc -p tsconfig.json && node --eval \"import { chmodSync } from 'node:fs'; chmodSync('dist/main.js', 0o755);\" && npm test && node dist/main.js --input-directory . --output-directory workplace --markdown",
+    "bundle": "npm run build && node scripts/build-cli-bundle.mjs",
+    "smoke:bundle": "node scripts/smoke-cli-bundle.mjs",
+    "pack:check": "npm_config_cache=workplace/.npm-cache npm pack --dry-run",
     "start": "node dist/main.js",
     "test": "vitest run"
   },
   "devDependencies": {
     "@types/node": "^24.6.0",
+    "esbuild": "^0.21.5",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.4"
+    "vitest": "^1.6.0"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.7.2",
+    "yaml": "^2.9.0"
   }
 }

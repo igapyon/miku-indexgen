@@ -1,0 +1,94 @@
+name: Release CLI bundle
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name, such as v1.3.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+env:
+  PRODUCT_NAME: miku-indexgen
+  RELEASE_ASSETS_DIR: release-assets
+
+jobs:
+  release-cli-bundle:
+    runs-on: ubuntu-latest
+    env:
+      TAG_NAME: ${{ github.event.inputs.tag_name || github.ref_name }}
+
+    steps:
+      - name: Check out release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Verify release tag
+        run: |
+          set -euo pipefail
+
+          case "$TAG_NAME" in
+            v*) ;;
+            *)
+              echo "Release asset upload only supports tags starting with v: $TAG_NAME" >&2
+              exit 1
+              ;;
+          esac
+
+          package_version="$(node -p "require('./package.json').version")"
+          tag_version="${TAG_NAME#v}"
+
+          case "$tag_version" in
+            "$package_version"|"$package_version".*) ;;
+            *)
+              echo "Tag version ($tag_version) must match package.json version ($package_version) or start with ${package_version}." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI bundle
+        run: npm run bundle
+
+      - name: Smoke test CLI bundle
+        run: npm run smoke:bundle
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+
+          version="${TAG_NAME#v}"
+
+          mkdir -p "${RELEASE_ASSETS_DIR}"
+          cp "bundle/${PRODUCT_NAME}.mjs" "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${version}.mjs"
+          cp "bundle/${PRODUCT_NAME}-sources.tgz" "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-sources-${version}.tgz"
+
+      - name: Verify release assets
+        run: |
+          set -euo pipefail
+          test -s "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-${TAG_NAME#v}.mjs"
+          test -s "${RELEASE_ASSETS_DIR}/${PRODUCT_NAME}-sources-${TAG_NAME#v}.tgz"
+
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          files: ${{ env.RELEASE_ASSETS_DIR }}/*
+          overwrite_files: true
+          draft: false
+          prerelease: false

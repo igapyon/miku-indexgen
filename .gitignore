@@ -1,4 +1,14 @@
+.DS_Store
 node_modules/
+.npm-cache/
 dist/
+bundle/
+coverage/
+release-assets/
 *.log
+npm-debug.log*
+.vscode/mcp.json
+.codex/skills/
 workspace/
+workplace/*
+!workplace/.gitkeep
