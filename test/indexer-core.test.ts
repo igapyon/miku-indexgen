@@ -184,6 +184,44 @@ describe("createIndexes", () => {
     ]);
   });
 
+  it("orders file entries by POSIX relative path using UTF-16 code units", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+
+    mkdirSync(join(docsDir, "B"), { recursive: true });
+    mkdirSync(join(docsDir, "a"), { recursive: true });
+    mkdirSync(join(docsDir, "あ"), { recursive: true });
+    writeFileSync(join(docsDir, "B", "file.md"), "# B\n", "utf8");
+    writeFileSync(join(docsDir, "a", "file.md"), "# A\n", "utf8");
+    writeFileSync(join(docsDir, "あ", "file.md"), "# Japanese\n", "utf8");
+    writeFileSync(join(docsDir, "Z.md"), "# Upper\n", "utf8");
+    writeFileSync(join(docsDir, "a.md"), "# Lower\n", "utf8");
+
+    createIndexes({
+      inputDirectory: docsDir,
+      title: undefined,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = readJsonFile<{
+      files: Array<{ path: string }>;
+    }>(join(docsDir, "index.json"));
+
+    expect(index.files.map((file) => file.path)).toEqual([
+      "B/file.md",
+      "Z.md",
+      "a.md",
+      "a/file.md",
+      "あ/file.md",
+    ]);
+  });
+
   it("filters files by includeExtensions", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");

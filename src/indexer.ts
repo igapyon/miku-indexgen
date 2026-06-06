@@ -8,7 +8,7 @@ import { formatIndexJson } from "./index-json.js";
 import { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
 import { buildMarkdownIndexContent, extractSummaryFromBody } from "./markdown.js";
 import { extractJsonSummary } from "./json-summary.js";
-import { getFileExtension, getFileName, toPosixPath } from "./path-utils.js";
+import { compareUtf16CodeUnitStrings, getFileExtension, getFileName, toPosixPath } from "./path-utils.js";
 import type { CreateIndexTimings, VerboseLogger } from "./logging.js";
 import type { CliOptions, GenerationMetadata, IndexFile, RootIndex } from "./types.js";
 
@@ -30,7 +30,7 @@ function formatOutputStatus(status: OutputWriteStatus): string {
 function listVisibleEntries(dirPath: string): Dirent[] {
   return readdirSync(dirPath, { withFileTypes: true })
     .filter((entry: Dirent) => !entry.name.startsWith("."))
-    .sort((a: Dirent, b: Dirent) => a.name.localeCompare(b.name, "ja"));
+    .sort((a: Dirent, b: Dirent) => compareUtf16CodeUnitStrings(a.name, b.name));
 }
 
 export function collectIndexableFiles(
@@ -243,7 +243,7 @@ function collectIndexFiles(
     return file;
   });
 
-  files.sort((a, b) => a.path.localeCompare(b.path, "ja"));
+  files.sort((a, b) => compareUtf16CodeUnitStrings(a.path, b.path));
   return files;
 }
 

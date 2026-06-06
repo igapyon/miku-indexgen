@@ -18,3 +18,15 @@ export function getFileExtension(filePath: string): string {
 export function getFileName(filePath: string): string {
   return basename(filePath);
 }
+
+export function compareUtf16CodeUnitStrings(a: string, b: string): number {
+  if (a < b) {
+    return -1;
+  }
+
+  if (a > b) {
+    return 1;
+  }
+
+  return 0;
+}

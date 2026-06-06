@@ -93,6 +93,14 @@ describe("extractFrontMatter", () => {
     });
   });
 
+  it("truncates long description metadata with an ellipsis", () => {
+    const description = "a".repeat(300);
+
+    expect(extractFrontMatter(`---\ndescription: ${description}\n---\n# Body\n`).metadata).toEqual({
+      description: `${"a".repeat(253)}...`,
+    });
+  });
+
   it("ignores unknown fields and unsupported documented value shapes", () => {
     expect(
       extractFrontMatter(
