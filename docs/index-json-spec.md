@@ -77,6 +77,7 @@ Example shape:
   "markdownOutput": true,
   "recursive": true,
   "includeExtensions": ["md", "json"],
+  "excludeGlobs": ["**/images/*", "**/section-text.md"],
   "inputEncoding": "utf8",
   "outputEncoding": "utf8",
   "title": "Docs Index",
@@ -151,6 +152,8 @@ Fields:
 - `markdownOutput`: whether `index.md` should also be generated
 - `recursive`: whether subdirectories are scanned
 - `includeExtensions`: indexed file extensions
+- `excludeGlobs`: optional input-relative POSIX glob patterns used to exclude
+  files after extension filtering
 - `inputEncoding`: input text encoding
 - `outputEncoding`: output text encoding
 - `jsonSummaryPaths`: optional JSON Pointer path list for JSON summaries
@@ -253,6 +256,8 @@ breaks.
 - `--no-recursive`: disables recursive scanning
 - `--no-overwrite`: skips writing when output already exists
 - `--include-ext <exts>`: restricts included file extensions
+- `--exclude-glob <pattern>`: excludes files by input-relative POSIX glob after
+  extension filtering; repeatable and stored in `generation.excludeGlobs`
 - `--input-encoding <encoding>`: reads supported text files as `utf8` or `shift_jis`
 - `--output-encoding <encoding>`: writes output as `utf8` or `shift_jis`
 

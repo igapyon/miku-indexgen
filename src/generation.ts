@@ -1,16 +1,21 @@
 import { dirname, relative, resolve } from "node:path";
 import { readTextFile } from "./encoding.js";
+import { normalizeExcludeGlobPatterns } from "./glob.js";
 import { toPosixPath } from "./path-utils.js";
 import type { CliOptions, GenerationMetadata } from "./types.js";
 
 export function buildGenerationMetadata(options: CliOptions, targetPath: string, outputPath: string): GenerationMetadata {
   const jsonSummaryPaths = options.jsonSummaryPaths && options.jsonSummaryPaths.length > 0 ? options.jsonSummaryPaths : undefined;
+  const excludeGlobs = options.excludeGlobs && options.excludeGlobs.length > 0
+    ? normalizeExcludeGlobPatterns(options.excludeGlobs)
+    : undefined;
   return {
     schemaVersion: 1,
     inputPath: toPosixPath(relative(dirname(outputPath), targetPath)) || ".",
     markdownOutput: options.markdownOutput,
     recursive: options.recursive,
     includeExtensions: options.includeExtensions,
+    ...(excludeGlobs ? { excludeGlobs } : {}),
     inputEncoding: options.inputEncoding,
     outputEncoding: options.outputEncoding,
     ...(jsonSummaryPaths ? { jsonSummaryPaths } : {}),
@@ -57,6 +62,7 @@ export function buildRefreshOptions(options: CliOptions, indexPath: string): Cli
     overwrite: options.overwrite,
     verbose: options.verbose,
     includeExtensions: generation.includeExtensions,
+    excludeGlobs: generation.excludeGlobs,
     inputEncoding: generation.inputEncoding,
     outputEncoding: generation.outputEncoding,
   };
@@ -80,6 +86,7 @@ function isGenerationMetadata(value: unknown): value is GenerationMetadata {
     isStringArray(generation.includeExtensions) &&
     typeof generation.inputEncoding === "string" &&
     typeof generation.outputEncoding === "string" &&
+    (generation.excludeGlobs === undefined || isStringArray(generation.excludeGlobs)) &&
     (generation.jsonSummaryPaths === undefined || isStringArray(generation.jsonSummaryPaths)) &&
     (generation.title === undefined || typeof generation.title === "string") &&
     typeof generation.includeGeneratorMetadata === "boolean"

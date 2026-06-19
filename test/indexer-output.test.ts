@@ -216,11 +216,13 @@ describe("createIndexes output handling", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md"],
+      excludeGlobs: ["**/skip.md"],
       inputEncoding: "utf8",
       outputEncoding: "utf8",
     });
 
     writeFileSync(join(docsDir, "second.md"), "# Second\n", "utf8");
+    writeFileSync(join(docsDir, "skip.md"), "# Skip\n", "utf8");
 
     createIndexes({
       inputDirectory: "",
@@ -237,7 +239,7 @@ describe("createIndexes output handling", () => {
 
     const index = readJsonFile<{
       title?: string;
-      generation?: { inputPath: string; markdownOutput: boolean; includeExtensions: string[] };
+      generation?: { inputPath: string; markdownOutput: boolean; includeExtensions: string[]; excludeGlobs?: string[] };
       files: Array<{ path: string; summary?: string }>;
     }>(join(outDir, "index.json"));
 
@@ -246,6 +248,7 @@ describe("createIndexes output handling", () => {
       inputPath: "../docs",
       markdownOutput: true,
       includeExtensions: ["md"],
+      excludeGlobs: ["**/skip.md"],
     });
     expect(index.files.map((file) => file.path)).toEqual(["root.md", "second.md"]);
     expect(readFileSync(join(outDir, "index.md"), "utf8")).toContain("| [second.md](second.md) | md |  | 9 | Second |");

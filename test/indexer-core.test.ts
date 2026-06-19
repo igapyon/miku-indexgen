@@ -29,6 +29,7 @@ describe("createIndexes", () => {
       overwrite: true,
       verbose: false,
       includeExtensions: ["md", "json"],
+      excludeGlobs: undefined,
       inputEncoding: "utf8",
       outputEncoding: "utf8",
     });
@@ -255,6 +256,60 @@ describe("createIndexes", () => {
         size: 4,
       },
     ]);
+  });
+
+  it("excludes files by input-relative glob after extension filtering", () => {
+    const workspace = createTempWorkspace();
+    const docsDir = join(workspace, "docs");
+
+    mkdirSync(join(docsDir, "2026", "05", "images-ai-native", "src", "sections", "001"), { recursive: true });
+    mkdirSync(join(docsDir, "2026", "05", "article"), { recursive: true });
+    writeFileSync(join(docsDir, "2026", "05", "article", "main.md"), "# Main\n", "utf8");
+    writeFileSync(join(docsDir, "2026", "05", "article", "note-image-recovery.md"), "# Recovery\n", "utf8");
+    writeFileSync(
+      join(docsDir, "2026", "05", "images-ai-native", "src", "sections", "001", "image-prompt.md"),
+      "# Prompt\n",
+      "utf8",
+    );
+    writeFileSync(
+      join(docsDir, "2026", "05", "images-ai-native", "src", "sections", "001", "section-text.md"),
+      "# Section\n",
+      "utf8",
+    );
+    writeFileSync(join(docsDir, "2026", "05", "article", "data.json"), "{\"title\":\"Data\"}\n", "utf8");
+
+    createIndexes({
+      inputDirectory: docsDir,
+      markdownOutput: false,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md"],
+      excludeGlobs: [
+        "**/images-*/*",
+        "**/note-image-recovery.md",
+        "**/image-prompt.md",
+        "**/section-text.md",
+      ],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    const index = readJsonFile<{
+      generation?: { includeExtensions: string[]; excludeGlobs?: string[] };
+      files: Array<{ path: string }>;
+    }>(join(docsDir, "index.json"));
+
+    expect(index.generation).toMatchObject({
+      includeExtensions: ["md"],
+      excludeGlobs: [
+        "**/images-*/*",
+        "**/note-image-recovery.md",
+        "**/image-prompt.md",
+        "**/section-text.md",
+      ],
+    });
+    expect(index.files.map((file) => file.path)).toEqual(["2026/05/article/main.md"]);
   });
 
   it("writes title only when --title is specified", () => {

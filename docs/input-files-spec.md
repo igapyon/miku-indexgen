@@ -47,8 +47,9 @@ The normal workflow is:
 1. choose one input directory
 2. scan files under that directory
 3. optionally narrow the scan with recursion, extension, and encoding options
-4. generate one `index.json` for the selected directory tree
-5. optionally generate one `index.md`
+4. optionally exclude noisy paths with `--exclude-glob`
+5. generate one `index.json` for the selected directory tree
+6. optionally generate one `index.md`
 
 This makes `miku-indexgen` suitable for bulk indexing a documentation folder,
 skill folder, reference folder, or small repository area before an agent reads
@@ -59,6 +60,7 @@ When only a subset of files should be indexed, prefer one of these approaches:
 - choose a narrower `--input-directory`
 - use `--no-recursive`
 - use `--include-ext <exts>`
+- use `--exclude-glob <pattern>` to remove obvious noise
 - write output to a separate `--output-directory`
 
 Do not treat `miku-indexgen` as a per-file command. If a user asks to index a
@@ -138,6 +140,45 @@ The runtime normalizes extension values by lowercasing them and removing a
 leading dot, so `.md,JSON` is treated like `md,json`.
 
 When `--include-ext` is omitted, the default extension list is `md,json`.
+
+## Exclude Glob Filtering
+
+Use repeatable `--exclude-glob <pattern>` options to exclude files after the
+input directory, recursion setting, and extension filter have selected the
+candidate files.
+
+Patterns are evaluated against paths relative to the input directory. Before
+matching, path separators are normalized to POSIX-style `/`.
+
+Supported glob syntax:
+
+- `*`: matches zero or more characters within one path segment
+- `?`: matches exactly one character within one path segment
+- `**`: matches zero or more path segments
+
+The matcher is case-sensitive. It does not support character classes, brace
+expansion, extglob, regular expressions, OS-dependent separators, or
+case-insensitive matching.
+
+When multiple `--exclude-glob` options are specified, a file is excluded if any
+pattern matches.
+
+Example:
+
+```bash
+miku-indexgen \
+  --input-directory references/raw/mikuku-articles \
+  --output-directory references/index/articles \
+  --include-ext md \
+  --exclude-glob "**/images-*/*" \
+  --exclude-glob "**/images/*" \
+  --exclude-glob "**/note-image-recovery.md" \
+  --exclude-glob "**/image-prompt.md" \
+  --exclude-glob "**/section-text.md"
+```
+
+The selected filters are stored in `generation.excludeGlobs`, so
+`--refresh-index <index.json>` regenerates with the same exclusion rules.
 
 ## Input Encoding
 

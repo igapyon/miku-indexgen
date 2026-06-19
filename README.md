@@ -70,6 +70,7 @@ When `--output-directory` is omitted, outputs are written under `inputDirectory`
 | `--no-recursive` | Disable recursive scanning under the input directory. |
 | `--no-overwrite` | Skip writing when an output file already exists. |
 | `--include-ext <exts>` | Comma-separated list of file extensions to include, for example `md,json`. |
+| `--exclude-glob <pattern>` | Exclude files by input-relative POSIX glob after extension filtering. Repeatable. Supports `*`, `?`, and `**`. |
 | `--input-encoding <encoding>` | Input text encoding. Supported values are `utf8` and `shift_jis`. |
 | `--output-encoding <encoding>` | Output text encoding. Supported values are `utf8` and `shift_jis`. |
 | `--verbose` | Emit progress diagnostics and timing details. |
@@ -130,6 +131,37 @@ topics:
 
 For JSON files, `summary` is omitted by default. When `--json-summary-path` is specified, each path is treated as a JSON Pointer and the first matching string value is used.
 
+## Excluding Files
+
+Use repeatable `--exclude-glob <pattern>` options to remove obvious noise after
+the normal input range is selected by `--input-directory`, recursion, and
+`--include-ext`.
+
+Patterns are evaluated against paths relative to the input directory. Path
+separators are normalized to `/`. The supported glob syntax is intentionally
+small and case-sensitive:
+
+- `*` matches zero or more characters within one path segment
+- `?` matches one character within one path segment
+- `**` matches zero or more path segments
+
+Example:
+
+```bash
+npx miku-indexgen \
+  --input-directory references/raw/mikuku-articles \
+  --output-directory references/index/articles \
+  --include-ext md \
+  --exclude-glob "**/images-*/*" \
+  --exclude-glob "**/images/*" \
+  --exclude-glob "**/note-image-recovery.md" \
+  --exclude-glob "**/image-prompt.md" \
+  --exclude-glob "**/section-text.md"
+```
+
+`--exclude-glob` values are stored in `generation.excludeGlobs`, so
+`--refresh-index` regenerates with the same exclusion rules.
+
 ## Examples
 
 Add a title:
@@ -181,12 +213,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.5.1`:
+Expected release asset names for tag `v1.6.0`:
 
-- `miku-indexgen-1.5.1.mjs`
-- `miku-indexgen-sources-1.5.1.tgz`
+- `miku-indexgen-1.6.0.mjs`
+- `miku-indexgen-sources-1.6.0.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.5.1.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.6.0.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -264,6 +296,7 @@ npx miku-indexgen --input-directory docs --output-directory out --markdown
 | `--no-recursive` | 入力ディレクトリ配下の再帰走査を無効化。 |
 | `--no-overwrite` | 出力ファイルが既に存在する場合は書き込みをスキップ。 |
 | `--include-ext <exts>` | 対象拡張子のカンマ区切り一覧。例: `md,json` |
+| `--exclude-glob <pattern>` | 拡張子による絞り込み後に、入力ディレクトリ相対の POSIX glob で除外。複数指定可。対応は `*`, `?`, `**`。 |
 | `--input-encoding <encoding>` | 入力テキストの文字コード。対応値: `utf8`, `shift_jis` |
 | `--output-encoding <encoding>` | 出力テキストの文字コード。対応値: `utf8`, `shift_jis` |
 | `--verbose` | 進行状況や処理時間の詳細を出力。 |
@@ -324,6 +357,35 @@ topics:
 
 JSON ファイルの `summary` はデフォルトでは省略されます。`--json-summary-path` を指定した場合は、JSON Pointer を左から順に評価し、最初に見つかった文字列値を使います。
 
+## ファイル除外
+
+`--exclude-glob <pattern>` を複数指定すると、`--input-directory`,
+再帰設定, `--include-ext` で決まった候補から明らかなノイズを除外できます。
+
+pattern は入力ディレクトリからの相対パスに対して評価します。パス区切りは `/` に
+正規化されます。対応する glob は意図的に小さく、大文字小文字は区別します。
+
+- `*`: 1パスセグメント内の0文字以上に一致
+- `?`: 1パスセグメント内の1文字に一致
+- `**`: 0個以上のパスセグメントに一致
+
+例:
+
+```bash
+npx miku-indexgen \
+  --input-directory references/raw/mikuku-articles \
+  --output-directory references/index/articles \
+  --include-ext md \
+  --exclude-glob "**/images-*/*" \
+  --exclude-glob "**/images/*" \
+  --exclude-glob "**/note-image-recovery.md" \
+  --exclude-glob "**/image-prompt.md" \
+  --exclude-glob "**/section-text.md"
+```
+
+`--exclude-glob` の値は `generation.excludeGlobs` に保存されるため、
+`--refresh-index` でも同じ除外条件で再生成されます。
+
 ## 例
 
 タイトルを付ける:
@@ -375,11 +437,11 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.5.1` の想定 release asset 名:
+tag `v1.6.0` の想定 release asset 名:
 
-- `miku-indexgen-1.5.1.mjs`
-- `miku-indexgen-sources-1.5.1.tgz`
+- `miku-indexgen-1.6.0.mjs`
+- `miku-indexgen-sources-1.6.0.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.5.1.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.6.0.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。

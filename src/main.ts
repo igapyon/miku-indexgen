@@ -12,6 +12,7 @@ export { normalizeEncodingName, parseEncodingOption, readTextFile, writeTextFile
 export { extractFrontMatter } from "./frontmatter.js";
 export type { MarkdownFrontMatter, MarkdownFrontMatterResult } from "./frontmatter.js";
 export { buildGenerationMetadata, buildRefreshOptions, readGenerationMetadata } from "./generation.js";
+export { matchesAnyExcludeGlob, matchesExcludeGlob, normalizeExcludeGlobPattern, normalizeExcludeGlobPatterns } from "./glob.js";
 export { formatIndexJson } from "./index-json.js";
 export { collectIndexableFiles, buildIndexContent, createIndexes, refreshIndex } from "./indexer.js";
 export { extractJsonSummary, getJsonPointerValue, parseJsonSummaryPaths } from "./json-summary.js";

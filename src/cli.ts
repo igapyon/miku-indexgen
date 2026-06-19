@@ -1,5 +1,6 @@
 import type { CliOptions } from "./types.js";
 import { parseEncodingOption } from "./encoding.js";
+import { normalizeExcludeGlobPatterns } from "./glob.js";
 import { parseJsonSummaryPaths } from "./json-summary.js";
 
 const DEFAULT_INCLUDE_EXTENSIONS = ["md", "json"];
@@ -52,6 +53,7 @@ export function parseArgs(argv: string[]): CliOptions {
   let overwrite = true;
   let verbose = false;
   let includeExtensions = [...DEFAULT_INCLUDE_EXTENSIONS];
+  const excludeGlobs: string[] = [];
   let inputEncoding = DEFAULT_TEXT_ENCODING;
   let outputEncoding = DEFAULT_TEXT_ENCODING;
 
@@ -118,6 +120,12 @@ export function parseArgs(argv: string[]): CliOptions {
       continue;
     }
 
+    if (arg === "--exclude-glob") {
+      excludeGlobs.push(readRequiredOptionValue(argv, i, "--exclude-glob", "a glob pattern"));
+      i += 1;
+      continue;
+    }
+
     if (arg === "--input-encoding") {
       inputEncoding = parseEncodingOption(readRequiredOptionValue(argv, i, "--input-encoding", "an encoding"));
       i += 1;
@@ -162,6 +170,7 @@ export function parseArgs(argv: string[]): CliOptions {
     overwrite,
     verbose,
     includeExtensions,
+    excludeGlobs: normalizeExcludeGlobPatterns(excludeGlobs),
     inputEncoding,
     outputEncoding,
   };
