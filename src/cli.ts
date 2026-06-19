@@ -43,6 +43,7 @@ function readRequiredOptionValue(argv: string[], index: number, optionName: stri
 
 export function parseArgs(argv: string[]): CliOptions {
   let inputDirectory: string | undefined;
+  let inputParentDirectory: string | undefined;
   let outputDirectory: string | undefined;
   let refreshIndex: string | undefined;
   let title: string | undefined;
@@ -62,6 +63,12 @@ export function parseArgs(argv: string[]): CliOptions {
 
     if (arg === "--input-directory") {
       inputDirectory = readRequiredOptionValue(argv, i, "--input-directory", "an input directory");
+      i += 1;
+      continue;
+    }
+
+    if (arg === "--input-parent-directory") {
+      inputParentDirectory = readRequiredOptionValue(argv, i, "--input-parent-directory", "an input parent directory");
       i += 1;
       continue;
     }
@@ -154,12 +161,17 @@ export function parseArgs(argv: string[]): CliOptions {
     throw new Error(`Unknown argument: ${arg}`);
   }
 
-  if (!inputDirectory && !refreshIndex) {
-    throw new Error("Please specify an input directory with --input-directory.");
+  const inputModes = [inputDirectory, inputParentDirectory, refreshIndex].filter((value) => value !== undefined).length;
+  if (inputModes > 1) {
+    throw new Error("Specify only one of --input-directory, --input-parent-directory, or --refresh-index.");
+  }
+  if (inputModes === 0) {
+    throw new Error("Please specify --input-directory, --input-parent-directory, or --refresh-index.");
   }
 
   return {
     inputDirectory: inputDirectory ?? "",
+    inputParentDirectory,
     outputDirectory,
     refreshIndex,
     title,

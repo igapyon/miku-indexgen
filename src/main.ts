@@ -3,7 +3,7 @@
 import { pathToFileURL } from "node:url";
 import { HelpRequestedError, VersionRequestedError, parseArgs } from "./cli.js";
 import { printHelp } from "./help.js";
-import { createIndexes } from "./indexer.js";
+import { IndexBatchError, createIndexes } from "./indexer.js";
 import { VERSION } from "./version.js";
 
 export type { CliOptions, GenerationMetadata, IndexFile, IndexSource, RootIndex } from "./types.js";
@@ -14,7 +14,7 @@ export type { MarkdownFrontMatter, MarkdownFrontMatterResult } from "./frontmatt
 export { buildGenerationMetadata, buildRefreshOptions, readGenerationMetadata } from "./generation.js";
 export { matchesAnyExcludeGlob, matchesExcludeGlob, normalizeExcludeGlobPattern, normalizeExcludeGlobPatterns } from "./glob.js";
 export { formatIndexJson } from "./index-json.js";
-export { collectIndexableFiles, buildIndexContent, createIndexes, refreshIndex } from "./indexer.js";
+export { IndexBatchError, collectIndexableFiles, buildIndexContent, createIndexes, refreshIndex } from "./indexer.js";
 export { extractJsonSummary, getJsonPointerValue, parseJsonSummaryPaths } from "./json-summary.js";
 export { printHelp } from "./help.js";
 export { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
@@ -33,6 +33,14 @@ export function main(): void {
     const count = createIndexes(options);
     console.log(`completed: ${count} subdirectories processed`);
   } catch (error) {
+    if (error instanceof IndexBatchError) {
+      for (const failure of error.childFailureMessages) {
+        console.error(`failed: ${failure}`);
+      }
+      console.log(`completed: ${error.childDirectoriesProcessed} child directories processed, ${error.childDirectoriesFailed} failed`);
+      process.exit(1);
+    }
+
     if (error instanceof HelpRequestedError) {
       printHelp();
       process.exit(0);

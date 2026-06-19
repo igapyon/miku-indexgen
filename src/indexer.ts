@@ -1,5 +1,5 @@
 import { Dirent, mkdirSync, readdirSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import { performance } from "node:perf_hooks";
 import { readTextFile, writeTextFile } from "./encoding.js";
 import { extractFrontMatter } from "./frontmatter.js";
@@ -24,6 +24,17 @@ type OutputPaths = {
 
 type OutputWriteStatus = "add" | "update" | "none";
 
+export class IndexBatchError extends Error {
+  constructor(
+    readonly childDirectoriesProcessed: number,
+    readonly childDirectoriesFailed: number,
+    readonly childFailureMessages: string[],
+  ) {
+    super(`${childDirectoriesFailed} child directories failed.`);
+    this.name = "IndexBatchError";
+  }
+}
+
 function formatOutputStatus(status: OutputWriteStatus): string {
   return status.padEnd(6, " ");
 }
@@ -44,6 +55,11 @@ export function collectIndexableFiles(
 }
 
 function getOutputPaths(outputDirectoryPath: string, options: CliOptions): OutputPaths {
+  const outputDirectoryStat = statSync(outputDirectoryPath, { throwIfNoEntry: false });
+  if (outputDirectoryStat && !outputDirectoryStat.isDirectory()) {
+    throw new Error(`Output directory must be a directory: ${outputDirectoryPath}`);
+  }
+
   const jsonPath = join(outputDirectoryPath, JSON_OUTPUT_FILE_NAME);
   return {
     jsonPath,
@@ -62,6 +78,73 @@ function countImmediateSubdirectories(targetPath: string): number {
   return listVisibleEntries(targetPath)
     .filter((entry: Dirent) => entry.isDirectory())
     .length;
+}
+
+function collectChildBaseDirectories(inputParentDirectoryPath: string, sharedOutputDirectoryPath: string | undefined): string[] {
+  return listVisibleEntries(inputParentDirectoryPath)
+    .filter((entry: Dirent) => entry.isDirectory())
+    .map((entry: Dirent) => join(inputParentDirectoryPath, entry.name))
+    .filter((childPath) => !isSharedOutputChildDirectory(childPath, inputParentDirectoryPath, sharedOutputDirectoryPath));
+}
+
+function isSharedOutputChildDirectory(
+  childDirectoryPath: string,
+  inputParentDirectoryPath: string,
+  sharedOutputDirectoryPath: string | undefined,
+): boolean {
+  if (!sharedOutputDirectoryPath) {
+    return false;
+  }
+
+  const normalizedParentPath = resolve(inputParentDirectoryPath);
+  const normalizedOutputPath = resolve(sharedOutputDirectoryPath);
+  const relativeOutputPath = relative(normalizedParentPath, normalizedOutputPath);
+  if (relativeOutputPath.startsWith("..") || isAbsolute(relativeOutputPath)) {
+    return false;
+  }
+
+  if (!relativeOutputPath || relativeOutputPath.includes("/") || relativeOutputPath.includes("\\")) {
+    return false;
+  }
+
+  return resolve(childDirectoryPath) === normalizedOutputPath;
+}
+
+function resolveBatchSharedOutputDirectory(outputDirectory: string | undefined): string | undefined {
+  if (!outputDirectory) {
+    return undefined;
+  }
+
+  const outputDirectoryPath = resolve(outputDirectory);
+  const outputDirectoryStat = statSync(outputDirectoryPath, { throwIfNoEntry: false });
+  if (outputDirectoryStat && !outputDirectoryStat.isDirectory()) {
+    throw new Error(`Output directory must be a directory: ${outputDirectoryPath}`);
+  }
+  return outputDirectoryPath;
+}
+
+function resolveChildOutputDirectory(sharedOutputDirectoryPath: string | undefined, childDirectoryPath: string): string | undefined {
+  if (!sharedOutputDirectoryPath) {
+    return undefined;
+  }
+
+  return join(sharedOutputDirectoryPath, getFileName(childDirectoryPath));
+}
+
+function copyOptionsForChildDirectory(
+  options: CliOptions,
+  childDirectoryPath: string,
+  childOutputDirectoryPath: string | undefined,
+): CliOptions {
+  return {
+    ...options,
+    inputDirectory: childDirectoryPath,
+    inputParentDirectory: undefined,
+    outputDirectory: childOutputDirectoryPath,
+    includeExtensions: [...options.includeExtensions],
+    excludeGlobs: options.excludeGlobs ? [...options.excludeGlobs] : undefined,
+    jsonSummaryPaths: options.jsonSummaryPaths ? [...options.jsonSummaryPaths] : undefined,
+  };
 }
 
 function shouldSkipExistingOutput(outputPath: string): boolean {
@@ -290,6 +373,10 @@ export function createIndexes(options: CliOptions): number {
     return refreshIndex(options);
   }
 
+  if (options.inputParentDirectory) {
+    return createIndexesForChildDirectories(options);
+  }
+
   const totalStart = performance.now();
   const targetPath = resolve(options.inputDirectory);
   const outputDirectoryPath = resolve(options.outputDirectory ?? options.inputDirectory);
@@ -320,6 +407,37 @@ export function createIndexes(options: CliOptions): number {
   logVerboseTimings(files, options, timings, performance.now() - totalStart, logger);
 
   return subdirs;
+}
+
+function createIndexesForChildDirectories(options: CliOptions): number {
+  const inputParentDirectoryPath = resolve(options.inputParentDirectory ?? "");
+  const inputParentStat = statSync(inputParentDirectoryPath, { throwIfNoEntry: false });
+  if (!inputParentStat?.isDirectory()) {
+    throw new Error(`Input parent directory does not exist: ${inputParentDirectoryPath}`);
+  }
+
+  const sharedOutputDirectoryPath = resolveBatchSharedOutputDirectory(options.outputDirectory);
+  const childDirectories = collectChildBaseDirectories(inputParentDirectoryPath, sharedOutputDirectoryPath);
+  const childFailureMessages: string[] = [];
+
+  for (const childDirectoryPath of childDirectories) {
+    try {
+      createIndexes(copyOptionsForChildDirectory(
+        options,
+        childDirectoryPath,
+        resolveChildOutputDirectory(sharedOutputDirectoryPath, childDirectoryPath),
+      ));
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      childFailureMessages.push(`${childDirectoryPath}: ${message}`);
+    }
+  }
+
+  if (childFailureMessages.length > 0) {
+    throw new IndexBatchError(childDirectories.length, childFailureMessages.length, childFailureMessages);
+  }
+
+  return childDirectories.length;
 }
 
 export function refreshIndex(options: CliOptions): number {

@@ -1,5 +1,6 @@
 export type CliOptions = {
   inputDirectory: string;
+  inputParentDirectory?: string;
   outputDirectory?: string;
   refreshIndex?: string;
   title?: string;

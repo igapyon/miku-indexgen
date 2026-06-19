@@ -56,11 +56,23 @@ This generates:
 
 When `--output-directory` is omitted, outputs are written under `inputDirectory`.
 
+Process each direct child directory under a parent directory:
+
+```bash
+npx miku-indexgen --input-parent-directory docs-parent --output-directory out --markdown
+```
+
+This writes child-specific outputs such as:
+
+- `out/<child>/index.json`
+- `out/<child>/index.md`
+
 ## CLI Options
 
 | Option | Description |
 | --- | --- |
 | `--input-directory <dir>` | Directory to scan. |
+| `--input-parent-directory <dir>` | Process each direct child directory under the specified parent directory. |
 | `--refresh-index <index.json>` | Regenerate an existing `index.json` from stored `generation` metadata. |
 | `--output-directory <dir>` | Directory to write `index.json` and optional `index.md`. When omitted, outputs are written under the input directory. |
 | `--title <text>` | Add a root-level title to generated JSON. |
@@ -74,6 +86,13 @@ When `--output-directory` is omitted, outputs are written under `inputDirectory`
 | `--input-encoding <encoding>` | Input text encoding. Supported values are `utf8` and `shift_jis`. |
 | `--output-encoding <encoding>` | Output text encoding. Supported values are `utf8` and `shift_jis`. |
 | `--verbose` | Emit progress diagnostics and timing details. |
+
+Usage rule:
+
+- specify exactly one input mode: `--input-directory`, `--input-parent-directory`, or `--refresh-index`
+- `--no-recursive` controls scanning inside each selected input base; it does not change how child directories are selected in batch mode
+- child-directory batch mode aggregates child failures and exits non-zero when any child fails
+- outputs may be written under the input directory by default; the current run's `index.json` and optional `index.md` are excluded from `files[]`
 
 ## Output
 
@@ -213,12 +232,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.6.0`:
+Expected release asset names for tag `v1.6.1`:
 
-- `miku-indexgen-1.6.0.mjs`
-- `miku-indexgen-sources-1.6.0.tgz`
+- `miku-indexgen-1.6.1.mjs`
+- `miku-indexgen-sources-1.6.1.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.6.0.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.6.1.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -437,11 +456,11 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.6.0` の想定 release asset 名:
+tag `v1.6.1` の想定 release asset 名:
 
-- `miku-indexgen-1.6.0.mjs`
-- `miku-indexgen-sources-1.6.0.tgz`
+- `miku-indexgen-1.6.1.mjs`
+- `miku-indexgen-sources-1.6.1.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.6.0.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.6.1.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。

@@ -1,8 +1,8 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 
-import { createIndexes } from "../src/main.js";
+import { IndexBatchError, createIndexes } from "../src/main.js";
 import { createTempWorkspace, readJsonFile } from "./test-utils.js";
 
 describe("createIndexes output handling", () => {
@@ -252,5 +252,88 @@ describe("createIndexes output handling", () => {
     });
     expect(index.files.map((file) => file.path)).toEqual(["root.md", "second.md"]);
     expect(readFileSync(join(outDir, "index.md"), "utf8")).toContain("| [second.md](second.md) | md |  | 9 | Second |");
+  });
+
+  it("processes each direct visible child directory in batch mode", () => {
+    const workspace = createTempWorkspace();
+    const parentDir = join(workspace, "parent");
+    const outDir = join(workspace, "out");
+    const child1 = join(parentDir, "b1");
+    const child2 = join(parentDir, "b2");
+
+    mkdirSync(child1, { recursive: true });
+    mkdirSync(child2, { recursive: true });
+    mkdirSync(join(parentDir, ".hidden-child"), { recursive: true });
+    writeFileSync(join(parentDir, "note.md"), "# Parent\n", "utf8");
+    writeFileSync(join(child1, "a.md"), "# A\n", "utf8");
+    writeFileSync(join(child2, "b.md"), "# B\n", "utf8");
+
+    const processed = createIndexes({
+      inputDirectory: "",
+      inputParentDirectory: parentDir,
+      outputDirectory: outDir,
+      title: undefined,
+      markdownOutput: true,
+      recursive: true,
+      overwrite: true,
+      verbose: false,
+      includeExtensions: ["md", "json"],
+      inputEncoding: "utf8",
+      outputEncoding: "utf8",
+    });
+
+    expect(processed).toBe(2);
+    expect(existsSync(join(outDir, "b1", "index.json"))).toBe(true);
+    expect(existsSync(join(outDir, "b1", "index.md"))).toBe(true);
+    expect(existsSync(join(outDir, "b2", "index.json"))).toBe(true);
+    expect(existsSync(join(outDir, ".hidden-child", "index.json"))).toBe(false);
+    expect(existsSync(join(outDir, "note.md"))).toBe(false);
+  });
+
+  it("aggregates child directory failures and continues remaining children", () => {
+    const workspace = createTempWorkspace();
+    const parentDir = join(workspace, "parent");
+    const outDir = join(workspace, "out");
+    const child1 = join(parentDir, "b1");
+    const child2 = join(parentDir, "b2");
+    const child3 = join(parentDir, "b3");
+
+    mkdirSync(child1, { recursive: true });
+    mkdirSync(child2, { recursive: true });
+    mkdirSync(child3, { recursive: true });
+    mkdirSync(outDir, { recursive: true });
+    writeFileSync(join(child1, "a.md"), "# A\n", "utf8");
+    writeFileSync(join(child2, "b.md"), "# B\n", "utf8");
+    writeFileSync(join(child3, "c.md"), "# C\n", "utf8");
+    writeFileSync(join(outDir, "b2"), "not a directory\n", "utf8");
+
+    let batchError: IndexBatchError | undefined;
+    try {
+      createIndexes({
+        inputDirectory: "",
+        inputParentDirectory: parentDir,
+        outputDirectory: outDir,
+        title: undefined,
+        markdownOutput: true,
+        recursive: true,
+        overwrite: true,
+        verbose: false,
+        includeExtensions: ["md", "json"],
+        inputEncoding: "utf8",
+        outputEncoding: "utf8",
+      });
+    } catch (error) {
+      if (error instanceof IndexBatchError) {
+        batchError = error;
+      } else {
+        throw error;
+      }
+    }
+
+    expect(batchError?.childDirectoriesProcessed).toBe(3);
+    expect(batchError?.childDirectoriesFailed).toBe(1);
+    expect(batchError?.childFailureMessages.join("\n")).toContain("Output directory must be a directory");
+    expect(existsSync(join(outDir, "b1", "index.json"))).toBe(true);
+    expect(existsSync(join(outDir, "b3", "index.json"))).toBe(true);
   });
 });
