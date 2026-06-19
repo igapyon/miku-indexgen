@@ -6,6 +6,7 @@ describe("parseArgs", () => {
   it("parses the input directory and options", () => {
     expect(parseArgs(["--input-directory", "./docs", "--output-directory", "./out", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--exclude-glob", "**\\images\\*", "--exclude-glob", "**/section-text.md", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
       inputDirectory: "./docs",
+      inputParentDirectory: undefined,
       outputDirectory: "./out",
       refreshIndex: undefined,
       title: "Docs Index",
@@ -32,6 +33,28 @@ describe("parseArgs", () => {
       refreshIndex: "workplace/index.json",
       verbose: true,
     });
+  });
+
+  it("parses input-parent-directory as a separate input mode", () => {
+    expect(parseArgs(["--input-parent-directory", "./parent", "--output-directory", "./out", "--no-recursive", "--verbose"])).toMatchObject({
+      inputDirectory: "",
+      inputParentDirectory: "./parent",
+      outputDirectory: "./out",
+      recursive: false,
+      verbose: true,
+    });
+  });
+
+  it("rejects using multiple input modes together", () => {
+    expect(() => parseArgs(["--input-directory", "./docs", "--input-parent-directory", "./parent"])).toThrow(
+      "Specify only one of --input-directory, --input-parent-directory, or --refresh-index.",
+    );
+    expect(() => parseArgs(["--input-directory", "./docs", "--refresh-index", "./index.json"])).toThrow(
+      "Specify only one of --input-directory, --input-parent-directory, or --refresh-index.",
+    );
+    expect(() => parseArgs(["--input-parent-directory", "./parent", "--refresh-index", "./index.json"])).toThrow(
+      "Specify only one of --input-directory, --input-parent-directory, or --refresh-index.",
+    );
   });
 });
 
@@ -66,6 +89,7 @@ describe("printHelp", () => {
     }
 
     expect(output).toContain("miku-indexgen --input-directory <dir>");
+    expect(output).toContain("miku-indexgen --input-parent-directory <dir>");
     expect(output).toContain("miku-indexgen --refresh-index <index.json>");
     expect(output).toContain("--no-generator");
     expect(output).toContain("--json-summary-path");
@@ -78,5 +102,6 @@ describe("printHelp", () => {
       "supported fields: title, description, topics, category, status, audience,"
     );
     expect(output).toContain("title, description, and topics are primary scan-time file selection signals");
+    expect(output).toContain("Child-directory batch mode:");
   });
 });
