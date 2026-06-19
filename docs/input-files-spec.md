@@ -170,12 +170,13 @@ miku-indexgen \
   --input-directory references/raw/mikuku-articles \
   --output-directory references/index/articles \
   --include-ext md \
-  --exclude-glob "**/images-*/*" \
-  --exclude-glob "**/images/*" \
-  --exclude-glob "**/note-image-recovery.md" \
-  --exclude-glob "**/image-prompt.md" \
-  --exclude-glob "**/section-text.md"
+  --exclude-glob "**/images-*/**" \
+  --exclude-glob "**/images/**"
 ```
+
+Use `**/images-*/**` instead of `**/images-*/*` when the whole `images-*`
+directory tree should be excluded. A single `*` matches only within one path
+segment.
 
 The selected filters are stored in `generation.excludeGlobs`, so
 `--refresh-index <index.json>` regenerates with the same exclusion rules.

@@ -16,10 +16,16 @@ describe("exclude glob matching", () => {
     expect(matchesExcludeGlob("2026/05/images/sections/foo.md", "**/images/*")).toBe(false);
   });
 
+  it("distinguishes one-level and recursive images directory excludes", () => {
+    expect(matchesExcludeGlob("2026/05/images-ai-native/file.md", "**/images-*/*")).toBe(true);
+    expect(matchesExcludeGlob("2026/05/images-ai-native/src/graphic-recording-text.md", "**/images-*/*")).toBe(false);
+    expect(matchesExcludeGlob("2026/05/images-ai-native/src/sections/001/image-prompt.md", "**/images-*/**")).toBe(true);
+  });
+
   it("matches any configured exclude glob", () => {
     expect(
       matchesAnyExcludeGlob("2026/05/images-ai-native/src/sections/001/section-text.md", [
-        "**/images-*/*",
+        "**/images-*/**",
         "**/section-text.md",
       ]),
     ).toBe(true);
