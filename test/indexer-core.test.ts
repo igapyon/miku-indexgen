@@ -258,7 +258,7 @@ describe("createIndexes", () => {
     ]);
   });
 
-  it("excludes files by input-relative glob after extension filtering", () => {
+  it("excludes files by recursive input-relative glob after extension filtering", () => {
     const workspace = createTempWorkspace();
     const docsDir = join(workspace, "docs");
 
@@ -286,7 +286,7 @@ describe("createIndexes", () => {
       verbose: false,
       includeExtensions: ["md"],
       excludeGlobs: [
-        "**/images-*/*",
+        "**/images-*/**",
         "**/note-image-recovery.md",
         "**/image-prompt.md",
         "**/section-text.md",
@@ -303,7 +303,7 @@ describe("createIndexes", () => {
     expect(index.generation).toMatchObject({
       includeExtensions: ["md"],
       excludeGlobs: [
-        "**/images-*/*",
+        "**/images-*/**",
         "**/note-image-recovery.md",
         "**/image-prompt.md",
         "**/section-text.md",

@@ -77,7 +77,7 @@ Example shape:
   "markdownOutput": true,
   "recursive": true,
   "includeExtensions": ["md", "json"],
-  "excludeGlobs": ["**/images/*", "**/section-text.md"],
+  "excludeGlobs": ["**/images-*/**", "**/images/**"],
   "inputEncoding": "utf8",
   "outputEncoding": "utf8",
   "title": "Docs Index",

@@ -171,12 +171,13 @@ npx miku-indexgen \
   --input-directory references/raw/mikuku-articles \
   --output-directory references/index/articles \
   --include-ext md \
-  --exclude-glob "**/images-*/*" \
-  --exclude-glob "**/images/*" \
-  --exclude-glob "**/note-image-recovery.md" \
-  --exclude-glob "**/image-prompt.md" \
-  --exclude-glob "**/section-text.md"
+  --exclude-glob "**/images-*/**" \
+  --exclude-glob "**/images/**"
 ```
+
+Use `**/images-*/**` instead of `**/images-*/*` when the whole `images-*`
+directory tree should be excluded. A single `*` matches only within one path
+segment.
 
 `--exclude-glob` values are stored in `generation.excludeGlobs`, so
 `--refresh-index` regenerates with the same exclusion rules.
@@ -395,12 +396,12 @@ npx miku-indexgen \
   --input-directory references/raw/mikuku-articles \
   --output-directory references/index/articles \
   --include-ext md \
-  --exclude-glob "**/images-*/*" \
-  --exclude-glob "**/images/*" \
-  --exclude-glob "**/note-image-recovery.md" \
-  --exclude-glob "**/image-prompt.md" \
-  --exclude-glob "**/section-text.md"
+  --exclude-glob "**/images-*/**" \
+  --exclude-glob "**/images/**"
 ```
+
+`images-*` ディレクトリ配下全体を除外したい場合は、`**/images-*/*` ではなく
+`**/images-*/**` を使います。単独の `*` は1つのパスセグメント内だけに一致します。
 
 `--exclude-glob` の値は `generation.excludeGlobs` に保存されるため、
 `--refresh-index` でも同じ除外条件で再生成されます。
