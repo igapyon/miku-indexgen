@@ -1,6 +1,6 @@
 export function printHelp(): void {
   console.log(`Usage:
-  miku-indexgen --input-directory <dir> [--output-directory <dir>] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
+  miku-indexgen --input-directory <dir> [--output-directory <dir>] [--title "Docs Index"] [--markdown] [--no-generator] [--json-summary-path /title,/name] [--no-recursive] [--no-overwrite] [--include-ext md,json] [--exclude-glob "**/images/*"] [--input-encoding utf8] [--output-encoding utf8] [--verbose]
   miku-indexgen --refresh-index <index.json> [--no-overwrite] [--verbose]
 
 Description:
@@ -11,10 +11,18 @@ Description:
 Default behavior:
   - recursively scans the input directory
   - indexes md,json files by default
+  - applies --exclude-glob after extension filtering
   - skips files and directories starting with "."
   - writes outputs under the input directory unless --output-directory is set
   - excludes the current run's index.json/index.md from files[]
   - stores generation metadata in index.json for later refresh
+
+Exclude glob:
+  --exclude-glob is evaluated against paths relative to the input directory
+  after --include-ext. Separators are normalized to "/". Matching is
+  case-sensitive. Supported glob syntax is only *, ?, and **. Character
+  classes, brace expansion, extglob, regular expressions, and OS-dependent
+  separators are not supported.
 
 Generated output:
   index.json contains title, generator, generation, basePath, and files[].
@@ -50,6 +58,8 @@ Options:
   --no-recursive                Scan only immediate files.
   --no-overwrite                Skip if output already exists.
   --include-ext <exts>          Comma-separated extensions. Default: md,json.
+  --exclude-glob <pattern>      Exclude input-relative POSIX paths matching * ? **.
+                                Repeatable. Stored in generation metadata.
   --input-encoding <encoding>   utf8 or shift_jis. Default: utf8.
   --output-encoding <encoding>  utf8 or shift_jis. Default: utf8.
   --verbose                     Print progress and timing details.
@@ -61,6 +71,7 @@ Examples:
   miku-indexgen --input-directory docs --markdown
   miku-indexgen --input-directory docs --output-directory workplace --markdown
   miku-indexgen --input-directory docs --json-summary-path /title,/name
+  miku-indexgen --input-directory docs --include-ext md --exclude-glob "**/images/*" --exclude-glob "**/section-text.md"
   miku-indexgen --refresh-index workplace/index.json
 
 References:

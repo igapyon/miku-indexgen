@@ -4,6 +4,7 @@ import { performance } from "node:perf_hooks";
 import { readTextFile, writeTextFile } from "./encoding.js";
 import { extractFrontMatter } from "./frontmatter.js";
 import { buildGenerationMetadata, buildRefreshOptions } from "./generation.js";
+import { matchesAnyExcludeGlob } from "./glob.js";
 import { formatIndexJson } from "./index-json.js";
 import { createEmptyTimings, createVerboseLogger, logVerboseStart, logVerboseTimings } from "./logging.js";
 import { buildMarkdownIndexContent, extractSummaryFromBody } from "./markdown.js";
@@ -234,7 +235,8 @@ function collectIndexFiles(
 
   const collectStart = performance.now();
   const indexableFiles = collectIndexableFiles(targetPath, options.recursive, options.includeExtensions)
-    .filter((filePath) => !isGeneratedOutputPath(filePath, outputPaths));
+    .filter((filePath) => !isGeneratedOutputPath(filePath, outputPaths))
+    .filter((filePath) => !matchesAnyExcludeGlob(toPosixPath(relative(targetPath, filePath)), options.excludeGlobs));
   timings.collectMs += performance.now() - collectStart;
 
   const files = indexableFiles.map((filePath) => {

@@ -4,7 +4,7 @@ import { HelpRequestedError, VersionRequestedError, parseArgs, parseIncludeExten
 
 describe("parseArgs", () => {
   it("parses the input directory and options", () => {
-    expect(parseArgs(["--input-directory", "./docs", "--output-directory", "./out", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
+    expect(parseArgs(["--input-directory", "./docs", "--output-directory", "./out", "--title", "Docs Index", "--markdown", "--no-generator", "--json-summary-path", "/title,/metadata/name", "--no-recursive", "--no-overwrite", "--include-ext", "md,json", "--exclude-glob", "**\\images\\*", "--exclude-glob", "**/section-text.md", "--input-encoding", "ShiftJIS", "--output-encoding", "shift-jis", "--verbose"])).toEqual({
       inputDirectory: "./docs",
       outputDirectory: "./out",
       refreshIndex: undefined,
@@ -16,6 +16,7 @@ describe("parseArgs", () => {
       overwrite: false,
       verbose: true,
       includeExtensions: ["md", "json"],
+      excludeGlobs: ["**/images/*", "**/section-text.md"],
       inputEncoding: "shift_jis",
       outputEncoding: "shift_jis",
     });
@@ -68,6 +69,10 @@ describe("printHelp", () => {
     expect(output).toContain("miku-indexgen --refresh-index <index.json>");
     expect(output).toContain("--no-generator");
     expect(output).toContain("--json-summary-path");
+    expect(output).toContain("--exclude-glob");
+    expect(output).toContain("applies --exclude-glob after extension filtering");
+    expect(output).toContain("Separators are normalized to \"/\".");
+    expect(output).toContain("Character");
     expect(output).toContain("files[] is sorted by normalized relative path using UTF-16 code unit order.");
     expect(output).toContain(
       "supported fields: title, description, topics, category, status, audience,"

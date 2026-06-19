@@ -10,6 +10,7 @@ export type CliOptions = {
   overwrite: boolean;
   verbose: boolean;
   includeExtensions: string[];
+  excludeGlobs?: string[];
   inputEncoding: string;
   outputEncoding: string;
 };
@@ -48,6 +49,7 @@ export type GenerationMetadata = {
   markdownOutput: boolean;
   recursive: boolean;
   includeExtensions: string[];
+  excludeGlobs?: string[];
   inputEncoding: string;
   outputEncoding: string;
   jsonSummaryPaths?: string[];
