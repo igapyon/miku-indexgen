@@ -148,6 +148,12 @@ topics:
 ---
 ```
 
+For copyable examples, see `docs/examples/`:
+
+- [`markdown-frontmatter-minimal.md`](docs/examples/markdown-frontmatter-minimal.md)
+- [`markdown-frontmatter-distilled.md`](docs/examples/markdown-frontmatter-distilled.md)
+- [`markdown-frontmatter-sources.md`](docs/examples/markdown-frontmatter-sources.md)
+
 For JSON files, `summary` is omitted by default. When `--json-summary-path` is specified, each path is treated as a JSON Pointer and the first matching string value is used.
 
 ## Excluding Files
@@ -233,12 +239,12 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 This repository includes one release workflow that attaches CLI bundle assets to a GitHub Release when a `v*` release tag is pushed.
 
-Expected release asset names for tag `v1.6.1`:
+Expected release asset names for tag `v1.6.2`:
 
-- `miku-indexgen-1.6.1.mjs`
-- `miku-indexgen-sources-1.6.1.tgz`
+- `miku-indexgen-1.6.2.mjs`
+- `miku-indexgen-sources-1.6.2.tgz`
 
-The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.6.1.2`.
+The release workflow checks that the tag version matches `package.json` version, or uses a dot suffix such as `v1.6.2.2`.
 
 The `.mjs` file is the single-file CLI runtime artifact. The `.tgz` file is the source archive for rebuild and audit.
 
@@ -375,6 +381,12 @@ topics:
 ---
 ```
 
+コピーして使える例は `docs/examples/` にあります。
+
+- [`markdown-frontmatter-minimal.md`](docs/examples/markdown-frontmatter-minimal.md)
+- [`markdown-frontmatter-distilled.md`](docs/examples/markdown-frontmatter-distilled.md)
+- [`markdown-frontmatter-sources.md`](docs/examples/markdown-frontmatter-sources.md)
+
 JSON ファイルの `summary` はデフォルトでは省略されます。`--json-summary-path` を指定した場合は、JSON Pointer を左から順に評価し、最初に見つかった文字列値を使います。
 
 ## ファイル除外
@@ -457,11 +469,11 @@ npx miku-indexgen --refresh-index workplace/index.json
 
 このリポジトリには、`v*` release tag が push されたときに CLI bundle asset を GitHub Release に添付する単一の release workflow があります。
 
-tag `v1.6.1` の想定 release asset 名:
+tag `v1.6.2` の想定 release asset 名:
 
-- `miku-indexgen-1.6.1.mjs`
-- `miku-indexgen-sources-1.6.1.tgz`
+- `miku-indexgen-1.6.2.mjs`
+- `miku-indexgen-sources-1.6.2.tgz`
 
-release workflow は、tag version が `package.json` の version と一致すること、または `v1.6.1.2` のような dot suffix 付きであることを確認します。
+release workflow は、tag version が `package.json` の version と一致すること、または `v1.6.2.2` のような dot suffix 付きであることを確認します。
 
 `.mjs` は 1 ファイル化した CLI runtime artifact です。`.tgz` は rebuild と audit のための source archive です。
